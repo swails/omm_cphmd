@@ -61,9 +61,9 @@ if arg[0].lower() in ('gnu', 'gcc'):
    cpp = 'g++'
    f90 = 'gfortran'
    ld = 'g++'
-   ldflags = []
-   cppflags = ['-Wall']
-   f90flags = ['-Wall']
+   ldflags = ['-fPIC']
+   cppflags = ['-Wall', '-fPIC']
+   f90flags = ['-Wall', '-fPIC']
 
    if opt.opt:
       cppflags.extend(['-O3', '-mtune=native'])
@@ -84,10 +84,10 @@ elif arg[0].lower() == 'clang':
    cpp = 'clang++'
    f90 = 'gfortran'
    ld = 'clang++'
-   ldflags = []
+   ldflags = ['-fPIC']
 
-   cppflags = ['-Wall']
-   f90flags = ['-Wall']
+   cppflags = ['-Wall', '-fPIC']
+   f90flags = ['-Wall', '-fPIC']
 
    if opt.opt:
       cppflags.extend(['-O3'])
@@ -108,9 +108,9 @@ else:
    cpp = 'icpc'
    f90 = 'ifort'
    ld = 'ifort'
-   ldflags = []
-   cppflags = ['-Wall']
-   f90flags = ['-warn', 'all']
+   ldflags = ['-fpic']
+   cppflags = ['-Wall', '-fpic']
+   f90flags = ['-warn', 'all', '-fpic']
 
    if opt.opt:
       cppflags.extend(['-O3', '-xHost', '-ipo'])

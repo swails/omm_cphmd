@@ -98,6 +98,7 @@ class Atom {
           * \param i : Index of this particular atom in the system
           * \param name : The name of the atom
           * \param type : The name of the atom type
+          * \param element : The atomic number of this atom
           * \param mass : The atomic mass of this atom (daltons)
           * \param charge : The partial atomic charge (electron fractions)
           * \param lj_rad : Rmin/2 Lennard-Jones parameter (Angstroms)
@@ -106,23 +107,25 @@ class Atom {
           * \param gb_screen : The GB screening factor
           */
         Atom(int i, std::string const& name, std::string const& type,
-             double mass, double charge, double lj_rad, double lj_eps,
-             double gb_rad, double gb_screen) :
-            index_(i), name_(name), type_(type), mass_(mass), charge_(charge),
-            lj_rad_(lj_rad), lj_eps_(lj_eps), gb_rad_(gb_rad),
+             int element, double mass, double charge, double lj_rad,
+             double lj_eps, double gb_rad, double gb_screen) :
+            index_(i), element_(element), name_(name), type_(type), mass_(mass),
+            charge_(charge), lj_rad_(lj_rad), lj_eps_(lj_eps), gb_rad_(gb_rad),
             gb_screen_(gb_screen) {}
 
-        Atom(int i, const char* name, const char* type, double mass,
-             double charge, double lj_rad, double lj_eps, double gb_rad,
-             double gb_screen) : 
-            index_(i), name_(std::string(name)), type_(std::string(type)),
-            mass_(mass), charge_(charge), lj_rad_(lj_rad), lj_eps_(lj_eps),
-            gb_rad_(gb_rad), gb_screen_(gb_screen) {}
+        Atom(int i, const char* name, const char* type, int element,
+             double mass, double charge, double lj_rad, double lj_eps,
+             double gb_rad, double gb_screen) :
+            index_(i), element_(element), name_(std::string(name)),
+            type_(std::string(type)), mass_(mass), charge_(charge),
+            lj_rad_(lj_rad), lj_eps_(lj_eps), gb_rad_(gb_rad),
+            gb_screen_(gb_screen) {}
 
         std::string getName(void) const {return name_;}
         std::string getType(void) const {return type_;}
 
         int getIndex(void) const {return index_;}
+        int getElement(void) const {return element_;}
 
         double getMass(void) const {return mass_;}
         double getCharge(void) const {return charge_;}
@@ -132,7 +135,7 @@ class Atom {
         double getGBScreen(void) const {return gb_screen_;}
 
     private:
-        int index_;               ///< Index of atom in the system
+        int index_, element_;     ///< Index of atom in the system
         std::string name_, type_; ///< Name and type of the atom
         double mass_, charge_, lj_rad_,      ///< Various atomic properties
                lj_eps_, gb_rad_, gb_screen_; ///< and parameters

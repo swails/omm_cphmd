@@ -8,13 +8,14 @@
 using namespace std;
 
 void check_atoms(void) {
-    CpHMD::Atom my_atom(0, string("CA"), string("CX"), 12.01,
+    CpHMD::Atom my_atom(0, string("CA"), string("CX"), 6, 12.01,
                         0.3, 1.0, 0.5, 1.2, 0.85);
-    CpHMD::Atom my_atom2(0, "CB", "CT", 12.01, 0.4, 1.05, 0.5, 1.18, 0.80);
+    CpHMD::Atom my_atom2(0, "CB", "CT", 6, 12.01, 0.4, 1.05, 0.5, 1.18, 0.80);
 
     // Check the first atom
     assert(my_atom.getName() == "CA");
     assert(my_atom.getType() == "CX");
+    assert(my_atom.getElement() == 6);
     assert(my_atom.getMass() == 12.01);
     assert(my_atom.getCharge() == 0.3);
     assert(my_atom.getLJRadius() == 1);
@@ -25,6 +26,7 @@ void check_atoms(void) {
     // Check the second atom
     assert(my_atom2.getName() == "CB");
     assert(my_atom2.getType() == "CT");
+    assert(my_atom2.getElement() == 6);
     assert(my_atom2.getMass() == 12.01);
     assert(my_atom2.getCharge() == 0.4);
     assert(my_atom2.getLJRadius() == 1.05);
@@ -35,7 +37,7 @@ void check_atoms(void) {
     // Now check the atom list
     CpHMD::AtomList atoms;
     for (int i = 0; i < 10; i++) {
-        atoms.push_back(CpHMD::Atom(i, "CA", "CX", 12.01, 0.3,
+        atoms.push_back(CpHMD::Atom(i, "CA", "CX", 6, 12.01, 0.3,
                                     1.0, 0.5, 1.2, 0.85));
     }
 
