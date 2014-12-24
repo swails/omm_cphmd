@@ -1,0 +1,4 @@
+.*.swp
+*.o
+unittest
+config.h
