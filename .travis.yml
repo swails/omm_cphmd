@@ -1,0 +1,9 @@
+language: cpp
+before_install:
+    - sudo apt-get install gfortran
+    - sudo apt-get install bc
+compiler:
+    - gcc
+    - clang
+script:
+    - make test
