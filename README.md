@@ -1,3 +1,8 @@
+Build Status
+============
+
+[![Linux Build Status](https://travis-ci.org/swails/omm_cphmd.svg?branch=master)](https://travis-ci.org/swails/omm_cphmd.svg)
+
 What is it?
 ===========
 
