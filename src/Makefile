@@ -4,6 +4,9 @@ include ../config.h
 
 OBJS = amberparm.o readparm.o
 
+install: all
+	/bin/mv libcphmd.so libcphmd.a ../lib
+
 all: lib
 
 .SUFFIXES: .F90 .cpp .o
@@ -21,4 +24,5 @@ clean:
 	/bin/rm -f $(OBJS)
 
 lib: $(OBJS)
-	$(CXX) -shared $(OBJS) -o libommcphmd.so
+	$(CXX) -shared $(OBJS) -o libcphmd.so
+	ar -rcs libcphmd.a $(OBJS)
