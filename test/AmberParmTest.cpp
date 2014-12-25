@@ -85,7 +85,6 @@ void check_add_angles(void) {
     parm.addAngle(1, 2, 3, 60.0, 120.0);
 
     assert(parm.Atoms().size() == 4);
-    assert(parm.Angles().size() == 2);
     assert(parm.Bonds().size() == 0);
     assert(parm.Angles().size() == 2);
 
@@ -100,6 +99,77 @@ void check_add_angles(void) {
     assert(parm.Angles()[1].getForceConstant() == 60.0);
     assert(parm.Angles()[0].getEquilibriumAngle() == 109.47);
     assert(parm.Angles()[1].getEquilibriumAngle() == 120.0);
+}
+
+void check_bad_add_angles(void) {
+    CpHMD::AmberParm parm;
+
+    bool caught = false;
+    try {
+        parm.addAngle(0, 1, 2, 500.0, 1.0);
+    } catch (CpHMD::AmberParmError &e) {
+        caught = true;
+    }
+
+    assert(caught);
+}
+
+void check_add_dihedrals(void) {
+    CpHMD::AmberParm parm;
+
+    CpHMD::Dihedral dihed(0, 1, 2, 3, 50.0, 180.0, 2, true);
+    CpHMD::Dihedral dihed2(0, 1, 2, 3, 20.0, 0.0, 3, false);
+
+    parm.addAtom("N", "N", 7, 14.01, -1.0, 0.8, 0.1, 1.2, 0.85);
+    parm.addAtom("CA", "CT", 6, 12.01, 0.5, 0.9, 0.15, 1.3, 0.85);
+    parm.addAtom("CB", "CT", 6, 12.01, 0.5, 0.9, 0.15, 1.3, 0.85);
+    parm.addAtom("CG", "CX", 6, 12.01, -0.5, 0.9, 0.15, 1.3, 0.85);
+    parm.addAtom("HG", "CX", 1, 1.01, 0.5, 0.6, 0.05, 0.8, 0.80);
+
+    parm.addDihedral(dihed);
+    parm.addDihedral(dihed2);
+    parm.addDihedral(1, 2, 3, 4, 40.0, 0.0, 1, false);
+
+    assert(parm.Atoms().size() == 5);
+    assert(parm.Bonds().size() == 0);
+    assert(parm.Angles().size() == 0);
+    assert(parm.Dihedrals().size() == 3);
+
+    assert(parm.Dihedrals()[0].getAtomI() == 0);
+    assert(parm.Dihedrals()[0].getAtomJ() == 1);
+    assert(parm.Dihedrals()[0].getAtomK() == 2);
+    assert(parm.Dihedrals()[0].getAtomL() == 3);
+    assert(parm.Dihedrals()[1].getAtomI() == 0);
+    assert(parm.Dihedrals()[1].getAtomJ() == 1);
+    assert(parm.Dihedrals()[1].getAtomK() == 2);
+    assert(parm.Dihedrals()[1].getAtomL() == 3);
+    assert(parm.Dihedrals()[2].getAtomI() == 1);
+    assert(parm.Dihedrals()[2].getAtomJ() == 2);
+    assert(parm.Dihedrals()[2].getAtomK() == 3);
+    assert(parm.Dihedrals()[2].getAtomL() == 4);
+
+    assert(parm.Dihedrals()[0].getForceConstant() == 50.0);
+    assert(parm.Dihedrals()[1].getForceConstant() == 20.0);
+    assert(parm.Dihedrals()[2].getForceConstant() == 40.0);
+    assert(parm.Dihedrals()[0].getPhase() == 180);
+    assert(parm.Dihedrals()[1].getPhase() == 0);
+    assert(parm.Dihedrals()[2].getPhase() == 0);
+    assert(parm.Dihedrals()[0].getPeriodicity() == 2);
+    assert(parm.Dihedrals()[1].getPeriodicity() == 3);
+    assert(parm.Dihedrals()[2].getPeriodicity() == 1);
+}
+
+void check_bad_add_dihedrals(void) {
+    CpHMD::AmberParm parm;
+
+    bool caught = false;
+    try {
+        parm.addDihedral(0, 1, 2, 3, 50.0, 180.0, 2, false);
+    } catch (CpHMD::AmberParmError &e) {
+        caught = true;
+    }
+
+    assert(caught);
 }
 
 int main() {
@@ -122,6 +192,18 @@ int main() {
 
     cout << "Checking adding angles to AmberParm...";
     check_add_angles();
+    cout << " OK" << endl;
+
+    cout << "Checking error catching in adding angles to AmberParm...";
+    check_bad_add_angles();
+    cout << " OK" << endl;
+
+    cout << "Checking adding dihedrals to AmberParm...";
+    check_add_dihedrals();
+    cout << " OK" << endl;
+
+    cout << "Checking error catching in adding dihedrals to AmberParm...";
+    check_bad_add_dihedrals();
     cout << " OK" << endl;
 
     return 0;
