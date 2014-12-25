@@ -118,8 +118,8 @@ void check_bad_add_angles(void) {
 void check_add_dihedrals(void) {
     CpHMD::AmberParm parm;
 
-    CpHMD::Dihedral dihed(0, 1, 2, 3, 50.0, 180.0, 2, true);
-    CpHMD::Dihedral dihed2(0, 1, 2, 3, 20.0, 0.0, 3, false);
+    CpHMD::Dihedral dihed(0, 1, 2, 3, 50.0, 180.0, 2, 1.2, 2.0, true);
+    CpHMD::Dihedral dihed2(0, 1, 2, 3, 20.0, 0.0, 3, 1.2, 2.0, false);
 
     parm.addAtom("N", "N", 7, 14.01, -1.0, 0.8, 0.1, 1.2, 0.85);
     parm.addAtom("CA", "CT", 6, 12.01, 0.5, 0.9, 0.15, 1.3, 0.85);
@@ -129,7 +129,7 @@ void check_add_dihedrals(void) {
 
     parm.addDihedral(dihed);
     parm.addDihedral(dihed2);
-    parm.addDihedral(1, 2, 3, 4, 40.0, 0.0, 1, false);
+    parm.addDihedral(1, 2, 3, 4, 40.0, 0.0, 1, 1.2, 2.0, false);
 
     assert(parm.Atoms().size() == 5);
     assert(parm.Bonds().size() == 0);
@@ -165,7 +165,7 @@ void check_bad_add_dihedrals(void) {
 
     bool caught = false;
     try {
-        parm.addDihedral(0, 1, 2, 3, 50.0, 180.0, 2, false);
+        parm.addDihedral(0, 1, 2, 3, 50.0, 180.0, 2, 1.2, 2.0, false);
     } catch (CpHMD::AmberParmError &e) {
         caught = true;
     }
@@ -211,6 +211,29 @@ void check_rdparm(void) {
     assert(parm.Angles()[0].getAtomK() == 14);
     assert(parm.Angles()[0].getForceConstant() == 30);
     assert(abs(parm.Angles()[0].getEquilibriumAngle() - 120) < 5e-4);
+
+    assert(parm.Dihedrals().size() == 5402);
+    assert(parm.Dihedrals()[0].getAtomI() == 12);
+    assert(parm.Dihedrals()[0].getAtomJ() == 11);
+    assert(parm.Dihedrals()[0].getAtomK() == 13);
+    assert(parm.Dihedrals()[0].getAtomL() == 14);
+    assert(!parm.Dihedrals()[0].ignoreEndGroups());
+    assert(parm.Dihedrals()[0].getForceConstant() == 2.0);
+    assert(parm.Dihedrals()[0].getPhase() == 0);
+    assert(parm.Dihedrals()[0].getPeriodicity() == 1);
+    assert(parm.Dihedrals()[0].getScee() == 1.2);
+    assert(parm.Dihedrals()[0].getScnb() == 2.0);
+
+    assert(parm.Dihedrals()[1].getAtomI() == 12);
+    assert(parm.Dihedrals()[1].getAtomJ() == 11);
+    assert(parm.Dihedrals()[1].getAtomK() == 13);
+    assert(parm.Dihedrals()[1].getAtomL() == 14);
+    assert(parm.Dihedrals()[1].ignoreEndGroups());
+    assert(parm.Dihedrals()[1].getForceConstant() == 2.5);
+    assert(abs(parm.Dihedrals()[1].getPhase() - 180) < 1e-4);
+    assert(parm.Dihedrals()[1].getPeriodicity() == 2);
+    assert(parm.Dihedrals()[1].getScee() == 1.2);
+    assert(parm.Dihedrals()[1].getScnb() == 2.0);
 }
 
 int main() {

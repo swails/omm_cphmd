@@ -67,13 +67,16 @@ class Dihedral {
           * \param kf : Force constant (kcal/mol)
           * \param phase : The phase shift of the torsion angle (degrees)
           * \param periodicity : The periodicity of the torsion parameter
+          * \param scee : The electrostatic scaling factor for this 1-4 pair
+          * \param scnb : The vdW scaling factor for this 1-4 pair
           * \param ignore_end : Whether or not the end-group interactions for
           *                     this torsion are ignored or not
           */
         Dihedral(int i, int j, int k, int l, double kf, double phase,
-                 int periodicity, bool ignore_end) :
+                 int periodicity, double scee, double scnb, bool ignore_end) :
             i_(i), j_(j), k_(k), l_(l), kf_(kf), phase_(phase),
-            periodicity_(periodicity), ignore_end_(ignore_end) {}
+            periodicity_(periodicity), scee_(scee), scnb_(scnb),
+            ignore_end_(ignore_end) {}
 
         int getAtomI(void) const {return i_;}
         int getAtomJ(void) const {return j_;}
@@ -82,14 +85,17 @@ class Dihedral {
 
         double getForceConstant(void) const {return kf_;}
         double getPhase(void) const {return phase_;}
+        double getScee(void) const {return scee_;}
+        double getScnb(void) const {return scnb_;}
         int getPeriodicity(void) const {return periodicity_;}
         bool ignoreEndGroups(void) const {return ignore_end_;}
 
     private:
-        int i_, j_, k_, l_; ///< Atom indices
-        double kf_, phase_; ///< Dihedral parameters
-        int periodicity_;   ///< Phase shift angle
-        bool ignore_end_;   ///< Whether end-group 1-4 ixns are ignored or not
+        int i_, j_, k_, l_;  ///< Atom indices
+        double kf_, phase_;  ///< Dihedral parameters
+        int periodicity_;    ///< Phase shift angle
+        double scee_, scnb_; ///< 1-4 nonbonded scaling factors
+        bool ignore_end_;    ///< Whether end-group 1-4 ixns are ignored or not
 };
 
 class Atom {

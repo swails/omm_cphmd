@@ -89,13 +89,14 @@ void AmberParm::addDihedral(Dihedral& new_dihedral) {
 }
 
 void AmberParm::addDihedral(int i, int j, int k, int l, double kf, double phase,
-                            int periodicity, bool ignore_end) {
+                            int periodicity, double scee, double scnb,
+                            bool ignore_end) {
     int natom = (int)atoms_.size();
     if (i < 0 || i >= natom || j < 0 || j >= natom || k < 0 || k >= natom ||
         l < 0 || l >= natom)
         throw AmberParmError("Dihedral atom index out of range");
-    dihedrals_.push_back(Dihedral(i, j, k, l, kf, phase,
-                                  periodicity, ignore_end));
+    dihedrals_.push_back(Dihedral(i, j, k, l, kf, phase, periodicity,
+                                  scee, scnb, ignore_end));
 }
 
 void AmberParm::rdparm(string const& filename) {
@@ -270,6 +271,69 @@ void AmberParm::rdparm(string const& filename) {
         int ai = parmData[angles][i4+3].i - 1;
         double ang = parmData[angleeq][ai].f * 180.0 / M_PI;
         addAngle(ii, jj, kk, parmData[anglek][ai].f, ang);
+    }
+
+    // Now add the dihedrals
+    string dihedrals = "DIHEDRALS_WITHOUT_HYDROGEN";
+    string dihedralsh = "DIHEDRALS_INC_HYDROGEN";
+    string dihedralk = "DIHEDRAL_FORCE_CONSTANT";
+    string dihedralphase = "DIHEDRAL_PHASE";
+    string dihedralperiodicity = "DIHEDRAL_PERIODICITY";
+    string scee = "SCEE_SCALE_FACTOR";
+    string scnb = "SCNB_SCALE_FACTOR";
+    int nphih = parmData[pointers][NPHIH].i;
+    int mphia = parmData[pointers][MPHIA].i;
+    int nptra = parmData[pointers][NPTRA].i;
+
+    vector<double> sceefac(nptra, 1.2);
+    vector<double> scnbfac(nptra, 2.0);
+
+    if (parmData.count(dihedrals) < 1 || parmData[dihedrals].size() != mphia*5)
+        throw AmberParmError("Bad (or missing) DIHEDRALS_WITHOUT_HYDROGEN section");
+    if (parmData.count(dihedralsh) < 1 || parmData[dihedralsh].size() != nphih*5)
+        throw AmberParmError("Bad (or missing) DIHEDRALS_INC_HYDROGEN section");
+    if (parmData.count(dihedralk) < 1 || parmData[dihedralk].size() != nptra)
+        throw AmberParmError("Bad (or missing) DIHEDRAL_FORCE_CONSTANT section");
+    if (parmData.count(dihedralphase) < 1 || 
+                parmData[dihedralphase].size() != nptra)
+        throw AmberParmError("Bad (or missing) DIHEDRAL_PHASE section");
+    if (parmData.count(dihedralperiodicity) < 1 || 
+                parmData[dihedralperiodicity].size() != nptra)
+        throw AmberParmError("Bad (or missing) DIHEDRAL_PERIODICITY section");
+    if (parmData.count(scee) > 0) {
+        for (int i = 0; i < nptra; i++)
+            sceefac[i] = parmData[scee][i].f;
+    }
+    if (parmData.count(scnb) > 0) {
+        for (int i = 0; i < nptra; i++)
+            scnbfac[i] = parmData[scnb][i].f;
+    }
+
+    for (int i = 0; i < nphih; i++) {
+        int i5 = i * 5;
+        int ii = parmData[dihedralsh][i5  ].i / 3;
+        int jj = parmData[dihedralsh][i5+1].i / 3;
+        int kk = parmData[dihedralsh][i5+2].i / 3;
+        int ll = parmData[dihedralsh][i5+3].i / 3;
+        int ai = parmData[dihedralsh][i5+4].i - 1;
+        double phase = parmData[dihedralphase][ai].f * 180.0 / M_PI;
+        int per = (int) parmData[dihedralperiodicity][ai].f;
+        bool ignore_end = kk < 0 || ll < 0;
+        addDihedral(ii, jj, abs(kk), abs(ll), parmData[dihedralk][ai].f, phase,
+                    per, sceefac[ai], scnbfac[ai], ignore_end);
+    }
+    for (int i = 0; i < mphia; i++) {
+        int i5 = i * 5;
+        int ii = parmData[dihedrals][i5  ].i / 3;
+        int jj = parmData[dihedrals][i5+1].i / 3;
+        int kk = parmData[dihedrals][i5+2].i / 3;
+        int ll = parmData[dihedrals][i5+3].i / 3;
+        int ai = parmData[dihedrals][i5+4].i - 1;
+        double phase = parmData[dihedralphase][ai].f * 180.0 / M_PI;
+        int per = (int) parmData[dihedralperiodicity][ai].f;
+        bool ignore_end = kk < 0 || ll < 0;
+        addDihedral(ii, jj, abs(kk), abs(ll), parmData[dihedralk][ai].f, phase,
+                    per, sceefac[ai], scnbfac[ai], ignore_end);
     }
 }
 

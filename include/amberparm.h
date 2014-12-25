@@ -66,7 +66,8 @@ class AmberParm {
 
         void addDihedral(Dihedral& new_dihedral);
         void addDihedral(int i, int j, int k, int l, double kf, double phase,
-                         int periodicity, bool ignore_end);
+                         int periodicity, double scee, double scnb,
+                         bool ignore_end);
 
         // Getters for the parameter types -- cannot modify them
         AtomList Atoms(void) const {return atoms_;}

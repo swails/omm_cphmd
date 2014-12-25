@@ -116,14 +116,16 @@ void check_angles(void) {
 }
 
 void check_dihedrals(void) {
-    CpHMD::Dihedral my_dihedral(0, 1, 2, 3, 10.0, 180.0, 2, false);
-    CpHMD::Dihedral my_dihedral2(1, 2, 3, 4, 20.0, 0.0, 4, true);
+    CpHMD::Dihedral my_dihedral(0, 1, 2, 3, 10.0, 180.0, 2, 1.2, 2.0, false);
+    CpHMD::Dihedral my_dihedral2(1, 2, 3, 4, 20.0, 0.0, 4, 1.2, 2.0, true);
 
     // Check the dihedral
     assert(my_dihedral.getForceConstant() == 10);
     assert(my_dihedral.getPhase() == 180);
     assert(my_dihedral.getPeriodicity() == 2);
     assert(!my_dihedral.ignoreEndGroups());
+    assert(my_dihedral.getScee() == 1.2);
+    assert(my_dihedral.getScnb() == 2.0);
     assert(my_dihedral.getAtomI() == 0);
     assert(my_dihedral.getAtomJ() == 1);
     assert(my_dihedral.getAtomK() == 2);
@@ -132,6 +134,8 @@ void check_dihedrals(void) {
     // Check the second dihedral
     assert(my_dihedral2.getForceConstant() == 20);
     assert(my_dihedral2.getPhase() == 0);
+    assert(my_dihedral2.getScee() == 1.2);
+    assert(my_dihedral2.getScnb() == 2.0);
     assert(my_dihedral2.getPeriodicity() == 4);
     assert(my_dihedral2.ignoreEndGroups());
     assert(my_dihedral2.getAtomI() == 1);
@@ -142,8 +146,8 @@ void check_dihedrals(void) {
     // Now check the dihedral list
     CpHMD::DihedralList dihedrals;
     for (int i = 0; i < 10; i++) {
-        dihedrals.push_back(CpHMD::Dihedral(i, i+1, i+2, i+3,
-                                            10.0, 180.0, 2, false));
+        dihedrals.push_back(CpHMD::Dihedral(i, i+1, i+2, i+3, 10.0, 180.0,
+                                            2, 1.0, 1.0, false));
     }
 
     int i = 0;
@@ -157,6 +161,8 @@ void check_dihedrals(void) {
         assert(it->getPhase() == 180.0);
         assert(!it->ignoreEndGroups());
         assert(it->getPeriodicity() == 2);
+        assert(it->getScee() == 1.0);
+        assert(it->getScnb() == 1.0);
     }
 }
 
