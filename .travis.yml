@@ -7,4 +7,5 @@ compiler:
     - clang
 script:
     - ./configure
+    - make install
     - make test
