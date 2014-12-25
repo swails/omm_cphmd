@@ -100,4 +100,14 @@ ExitStatus readparm(const std::string &fname, std::vector<std::string> &flagList
                     ParmStringMap &unkParmData, ParmFormatMap &parmFormats,
                     std::string &version);
 
+/* Parm pointers */
+enum PARM_POINTERS {
+        NATOM=0,  NTYPES, NBONH,  MBONA,  NTHETH, MTHETA,
+        NPHIH,    MPHIA,  NHPARM, NPARM,  NNB,    NRES,
+        NBONA,    NTHETA, NPHIA,  NUMBND, NUMANG, NPTRA,
+        NATYP,    NPHB,   IFPERT, NBPER,  NGPER,  NDPER,
+        MBPER,    MGPER,  MDPER,  IFBOX,  NMXRS,  IFCAP,
+        NUMEXTRA, NCOPY
+};
+
 #endif /* READPARM_H */

@@ -1,6 +1,6 @@
 include ../config.h
 
-test:: TopologyTest AmberParmTest
+test:: clean TopologyTest AmberParmTest
 	./TopologyTest && /bin/rm ./TopologyTest
 	./AmberParmTest && /bin/rm ./AmberParmTest
 
@@ -9,6 +9,9 @@ TopologyTest: TopologyTest.cpp
 
 AmberParmTest: AmberParmTest.cpp
 	$(CXX) $(CXXFLAGS) -I../include -o AmberParmTest AmberParmTest.cpp ../lib/libcphmd.a
+
+clean:
+	/bin/rm -f TopologyTest AmberParmTest
 
 depends::
 	../makedepends

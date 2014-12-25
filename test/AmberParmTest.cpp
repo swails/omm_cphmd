@@ -2,6 +2,7 @@
 // Testing program driving the unit tests for the AmberParm class
 
 #include <cassert>
+#include <cmath>
 #include <iostream>
 
 #include "amberparm.h"
@@ -172,6 +173,46 @@ void check_bad_add_dihedrals(void) {
     assert(caught);
 }
 
+void check_rdparm(void) {
+    CpHMD::AmberParm parm;
+
+    parm.rdparm("trx.prmtop");
+
+    // Check atoms and atom properties
+
+    assert(parm.Atoms().size() == 1654);
+    assert(parm.Atoms()[0].getName() == "N");
+    assert(parm.Atoms()[0].getType() == "N3");
+    assert(parm.Atoms()[0].getMass() == 14.01);
+    assert(abs(parm.Atoms()[0].getCharge() - 0.1849) < 1e-4);
+    assert(parm.Atoms()[0].getGBRadius() == 1.55);
+    assert(parm.Atoms()[0].getGBScreen() == 0.79);
+    assert(abs(parm.Atoms()[0].getLJRadius() - 1.824) < 1e-4);
+    assert(abs(parm.Atoms()[0].getLJEpsilon() - 0.17) < 1e-4);
+
+    assert(parm.Atoms()[1653].getName() == "OXT");
+    assert(parm.Atoms()[1653].getType() == "O2");
+    assert(parm.Atoms()[1653].getMass() == 16.00);
+    assert(abs(parm.Atoms()[1653].getCharge() - -0.8055) < 1e-4);
+    assert(parm.Atoms()[1653].getGBRadius() == 1.5);
+    assert(parm.Atoms()[1653].getGBScreen() == 0.85);
+    assert(abs(parm.Atoms()[1653].getLJRadius() - 1.6612) < 1e-4);
+    assert(abs(parm.Atoms()[1653].getLJEpsilon() - 0.21) < 1e-4);
+
+    assert(parm.Bonds().size() == 1670);
+    assert(parm.Bonds()[0].getAtomI() == 9);
+    assert(parm.Bonds()[0].getAtomJ() == 10);
+    assert(parm.Bonds()[0].getForceConstant() == 553);
+    assert(parm.Bonds()[0].getEquilibriumDistance() == 0.96);
+
+    assert(parm.Angles().size() == 3049);
+    assert(parm.Angles()[0].getAtomI() == 11);
+    assert(parm.Angles()[0].getAtomJ() == 13);
+    assert(parm.Angles()[0].getAtomK() == 14);
+    assert(parm.Angles()[0].getForceConstant() == 30);
+    assert(abs(parm.Angles()[0].getEquilibriumAngle() - 120) < 5e-4);
+}
+
 int main() {
 
     cout << "Checking adding atoms to AmberParm...";
@@ -204,6 +245,10 @@ int main() {
 
     cout << "Checking error catching in adding dihedrals to AmberParm...";
     check_bad_add_dihedrals();
+    cout << " OK" << endl;
+
+    cout << "Checking Amber topology file reading...";
+    check_rdparm();
     cout << " OK" << endl;
 
     return 0;
