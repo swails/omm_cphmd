@@ -3,5 +3,6 @@
 unittest
 config.h
 *.so
-.*.swo
+*.dylib
 *.a
+.*.swo

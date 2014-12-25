@@ -177,4 +177,6 @@ int main(int argc, char** argv) {
     cout << "Checking Dihedral class with list...";
     check_dihedrals();
     cout << " OK" << endl;
+
+    return 0;
 }

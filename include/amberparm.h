@@ -41,13 +41,20 @@ class AmberParm {
         dihedral_iterator DihedralEnd(void) const {return dihedrals_.end();}
 
         /* To add parameters. They can either be added using the parameter type
-         * directly or by providing the atom indexes and the parameters
+         * directly or by providing the atom indexes and the parameters. If the
+         * indexes of the provided atoms are not sequential, an AmberParmError
+         * will be thrown. If atom properties are provided, the indexes will be
+         * assigned sequentially.
+         *
+         * If any bonds, angles, or dihedrals are assigned with atom indexes
+         * out of range of the main atom list, an AmberParmError will be thrown
+         * (meaning that atoms MUST be added first).
          */
         void addAtom(Atom& new_atom);
-        void addAtom(int i, std::string const& name, std::string const& type,
+        void addAtom(std::string const& name, std::string const& type,
                      int element, double mass, double charge, double lj_rad,
                      double lj_eps, double gb_rad, double gb_screen);
-        void addAtom(int i, const char *name, const char *type, int element,
+        void addAtom(const char *name, const char *type, int element,
                      double mass, double charge, double lj_rad, double lj_eps,
                      double gb_rad, double gb_screen);
 
