@@ -1,10 +1,10 @@
 include ../config.h
 
-test:: unittest
-	./unittest && /bin/rm ./unittest
+test:: TopologyTest
+	./TopologyTest && /bin/rm ./TopologyTest
 
-unittest: unittest.cpp
-	$(CXX) $(CXXFLAGS) -I../include -o unittest unittest.cpp ../lib/libcphmd.a
+TopologyTest: TopologyTest.cpp
+	$(CXX) $(CXXFLAGS) -I../include -o TopologyTest TopologyTest.cpp ../lib/libcphmd.a
 
 depends::
 	../makedepends
