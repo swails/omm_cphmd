@@ -5,7 +5,7 @@ include ../config.h
 OBJS = amberparm.o readparm.o
 
 install: all
-	/bin/mv libcphmd.so libcphmd.a ../lib
+	/bin/mv libcphmd$(SHARED_EXT) libcphmd.a $(PREFIX)/lib
 
 all: lib
 
@@ -24,5 +24,5 @@ clean:
 	/bin/rm -f $(OBJS)
 
 lib: $(OBJS)
-	$(CXX) -shared $(OBJS) -o libcphmd.so
+	$(CXX) $(MAKESHARED) $(OBJS) -o libcphmd$(SHARED_EXT)
 	ar -rcs libcphmd.a $(OBJS)

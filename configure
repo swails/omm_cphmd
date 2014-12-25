@@ -15,7 +15,7 @@ parser.add_option('--no-zlib', action='store_false', default=True, dest='zlib',
                   help='Compile without zlib support')
 parser.add_option('-p', '--program', dest='prog', default='cphstats',
                   help='The name of the resulting program. Default %default.')
-parser.add_option('--prefix', dest='prefix', default='/usr/local',
+parser.add_option('--prefix', dest='prefix', default=os.getcwd(),
                   help='Installation destination. Default is current directory')
 
 
@@ -52,7 +52,8 @@ if len(arg) > 1:
    sys.exit(1)
 
 if not arg[0].lower() in ('gnu', 'intel', 'gcc', 'clang'):
-   sys.exit("Unrecognized compiler [%s]. Choose 'gnu' 'intel' or 'clang'.\n" % arg[0])
+   sys.exit("Unrecognized compiler [%s]. Choose 'gnu' 'intel' or 'clang'.\n" %
+            arg[0])
 
 f = open('config.h', 'w')
 
@@ -129,10 +130,19 @@ else:
 if opt.zlib:
    cppflags.append('-DHASGZ')
 
+if 'darwin' in sys.platform.lower():
+    makeshared = '-dynamiclib -undefined suppress -flat_namespace'
+    sharedext = '.dylib'
+else:
+    makeshared = '-shared'
+    sharedext = '.so'
 confighopts = dict(cpp=cpp, f90=f90, ld=ld, ldflags=' '.join(ldflags),
                cppflags=' '.join(cppflags), f90flags=' '.join(f90flags),
-               confline=' '.join(sys.argv), prog=opt.prog, prefix=opt.prefix)
+               confline=' '.join(sys.argv), prog=opt.prog, prefix=opt.prefix,
+               makeshared=makeshared, sharedext=sharedext)
 f.write("""# configured with [[ %(confline)s ]]
+# Where to install
+PREFIX = %(prefix)s
 
 # Compilers
 CXX = %(cpp)s
@@ -142,5 +152,9 @@ LD = %(ld)s
 # Flags
 CXXFLAGS = %(cppflags)s
 LDFLAGS = %(ldflags)s
+
+# To make a shared library
+MAKESHARED = %(makeshared)s
+SHARED_EXT = %(sharedext)s
 """ % confighopts)
 f.close()

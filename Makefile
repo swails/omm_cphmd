@@ -1,10 +1,10 @@
 include config.h
 
-install: lib
+install: $(PREFIX)/lib
 	cd src && $(MAKE) install
 
 test::
 	cd test && $(MAKE) test
 
-lib:
-	/bin/mkdir lib
+$(PREFIX)/lib:
+	/bin/mkdir $(PREFIX)/lib
