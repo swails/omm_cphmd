@@ -57,13 +57,18 @@ if not arg[0].lower() in ('gnu', 'intel', 'gcc', 'clang'):
 
 f = open('config.h', 'w')
 
+if os.getenv('OPENMM_LIB_PATH') is None or \
+        os.getenv('OPENMM_INCLUDE_PATH') is None:
+    sys.exit("OpenMM not detected -- be sure OPENMM_LIB_PATH and "
+             "OPENMM_INCLUDE_PATH are set")
+
 if arg[0].lower() in ('gnu', 'gcc'):
    # GNU compilers
    cpp = 'g++'
    f90 = 'gfortran'
    ld = 'g++'
    ldflags = ['-fPIC']
-   cppflags = ['-Wall', '-fPIC']
+   cppflags = ['-Wall', '-fPIC', '-I%s' % os.getenv('OPENMM_INCLUDE_PATH')]
    f90flags = ['-Wall', '-fPIC']
 
    if opt.opt:
@@ -87,7 +92,7 @@ elif arg[0].lower() == 'clang':
    ld = 'clang++'
    ldflags = ['-fPIC']
 
-   cppflags = ['-Wall', '-fPIC']
+   cppflags = ['-Wall', '-fPIC', '-I%s' % os.getenv('OPENMM_INCLUDE_PATH')]
    f90flags = ['-Wall', '-fPIC']
 
    if opt.opt:
@@ -110,7 +115,7 @@ else:
    f90 = 'ifort'
    ld = 'ifort'
    ldflags = ['-fpic']
-   cppflags = ['-Wall', '-fpic']
+   cppflags = ['-Wall', '-fpic', '-I%s' % os.getenv('OPENMM_INCLUDE_PATH')]
    f90flags = ['-warn', 'all', '-fpic']
 
    if opt.opt:
@@ -136,6 +141,9 @@ if 'darwin' in sys.platform.lower():
 else:
     makeshared = '-shared'
     sharedext = '.so'
+
+ldflags.extend(['-L%s' % os.getenv('OPENMM_LIB_PATH'), '-lOpenMM'])
+
 confighopts = dict(cpp=cpp, f90=f90, ld=ld, ldflags=' '.join(ldflags),
                cppflags=' '.join(cppflags), f90flags=' '.join(f90flags),
                confline=' '.join(sys.argv), prog=opt.prog, prefix=opt.prefix,
