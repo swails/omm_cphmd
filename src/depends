@@ -1,0 +1,2 @@
+amberparm.cpp: ../include/amberparm.h ../include/exceptions.h
+readparm.cpp: ../include/readparm.h

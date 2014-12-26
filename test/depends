@@ -1,1 +1,2 @@
-test.cpp: topology.h
+AmberParmTest.cpp: ../include/amberparm.h ../include/exceptions.h
+TopologyTest.cpp: ../include/topology.h

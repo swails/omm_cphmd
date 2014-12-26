@@ -234,6 +234,41 @@ void check_rdparm(void) {
     assert(parm.Dihedrals()[1].getPeriodicity() == 2);
     assert(parm.Dihedrals()[1].getScee() == 1.2);
     assert(parm.Dihedrals()[1].getScnb() == 2.0);
+
+    // Check the residue properties
+    assert(parm.ResidueLabels()[0] == "SER");
+    assert(parm.ResidueLabels()[107] == "ALA");
+    assert(parm.ResiduePointers()[1] - parm.ResiduePointers()[0] == 13);
+    assert(parm.ResiduePointers()[0] == 0);
+    assert(parm.ResiduePointers()[1] == 13);
+    assert(parm.ResiduePointers()[108] - parm.ResiduePointers()[107] == 11);
+
+    // Check the exclusions
+    for (CpHMD::AmberParm::bond_iterator it = parm.BondBegin();
+            it != parm.BondEnd(); it++) {
+        assert(parm.isExcluded(it->getAtomI(), it->getAtomJ()));
+        assert(parm.isExcluded(it->getAtomJ(), it->getAtomI()));
+    }
+    for (CpHMD::AmberParm::angle_iterator it = parm.AngleBegin();
+            it != parm.AngleEnd(); it++) {
+        assert(parm.isExcluded(it->getAtomI(), it->getAtomJ()));
+        assert(parm.isExcluded(it->getAtomJ(), it->getAtomI()));
+        assert(parm.isExcluded(it->getAtomI(), it->getAtomK()));
+        assert(parm.isExcluded(it->getAtomK(), it->getAtomI()));
+        assert(parm.isExcluded(it->getAtomJ(), it->getAtomK()));
+        assert(parm.isExcluded(it->getAtomK(), it->getAtomJ()));
+    }
+    /* Make sure the exceptions (i.e., 1-4s that are NOT excluded) are NOT part
+     * of the exceptions.
+     */
+    for (CpHMD::AmberParm::dihedral_iterator it = parm.DihedralBegin();
+            it != parm.DihedralEnd(); it++) {
+        bool ignore_end = it->ignoreEndGroups();
+        if (!ignore_end) {
+            assert(!parm.isExcluded(it->getAtomI(), it->getAtomL()));
+            assert(!parm.isExcluded(it->getAtomL(), it->getAtomI()));
+        }
+    }
 }
 
 int main() {

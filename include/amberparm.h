@@ -9,6 +9,7 @@
 #define AMBERPARM_H
 
 #include <string>
+#include <set>
 
 #include "topology.h"
 #include "readparm.h"
@@ -74,6 +75,22 @@ class AmberParm {
         BondList Bonds(void) const {return bonds_;}
         AngleList Angles(void) const {return angles_;}
         DihedralList Dihedrals(void) const {return dihedrals_;}
+        std::vector<int> ResiduePointers(void) const {return residue_pointers_;}
+        std::vector<std::string> ResidueLabels(void) const {
+            return residue_labels_;
+        }
+        /** Returns true if 2 atoms are excluded or false if they are not (note,
+          * exceptions, like the 1-4 interactions, do NOT count as exclusions)
+          */
+        bool isExcluded(int i, int j) {
+            if (i == j) return true;
+            if (i < j) {
+                return exclusion_list_[i].count(j) > 0;
+            }
+            return exclusion_list_[j].count(i) > 0;
+        }
+
+        void printExclusions(int i);
 
         /// Read a prmtop file and instantiate a structure from it.
         void rdparm(std::string const& filename);
@@ -84,6 +101,9 @@ class AmberParm {
         BondList bonds_;
         AngleList angles_;
         DihedralList dihedrals_;
+        std::vector<int> residue_pointers_;
+        std::vector<std::string> residue_labels_;
+        std::vector<std::set<int> > exclusion_list_;
 };
 
 };

@@ -18,7 +18,7 @@ for f in os.listdir('.'):
          if incre.match(line):
             d = incre.match(line).groups()[0]
             if not d in mydep and not d in ignored_headers:
-               mydep.append(d)
+               mydep.append('../include/%s' % d)
       if mydep: dep.write('%s: %s\n' % (f, ' '.join(mydep)))
 
 dep.close()

@@ -146,10 +146,23 @@ void AmberParm::rdparm(string const& filename) {
     string pointers = "POINTERS";
     string mass = "MASS";
     string charge = "CHARGE";
+    string resptr = "RESIDUE_POINTER";
+    string reslab = "RESIDUE_LABEL";
 
     if (parmData.count(pointers) < 1)
         throw AmberParmError("Missing POINTERS in prmtop");
     int N = parmData[pointers][NATOM].i;
+    int NR = parmData[pointers][NRES].i;
+
+    // Allocate space for the exclusion and exception lists
+    exclusion_list_.reserve(N);
+    vector<set<int> > exception_list(N);
+    for (int i = 0; i < N; i++) {
+        set<int> s1;
+        set<int> s2;
+        exclusion_list_.push_back(s1);
+        exception_list.push_back(s2);
+    }
 
     if (parmData.count(atomic_number) < 1 || parmData[atomic_number].size() != N)
         throw AmberParmError(
@@ -176,6 +189,12 @@ void AmberParm::rdparm(string const& filename) {
         throw AmberParmError("Missing MASS in prmtop or wrong # of elements");
     if (parmData.count(charge) < 1 || parmData[charge].size() != N)
         throw AmberParmError("Missing CHARGE in prmtop or wrong # of elements");
+    if (parmData.count(reslab) < 1 || parmData[reslab].size() != NR)
+        throw AmberParmError(
+                "Missing RESIDUE_LABEL in prmtop or wrong # of elements");
+    if (parmData.count(resptr) < 1 || parmData[resptr].size() != NR)
+        throw AmberParmError(
+                "Missing RESIDUE_POINTER in prmtop or wrong # of elements");
 
     // Now extract the per-particle LJ rmin/epsilon parameters
     vector<double> lj_rmin, lj_eps;
@@ -203,6 +222,15 @@ void AmberParm::rdparm(string const& filename) {
                 chg, lj_rmin[typ-1], lj_eps[typ-1],
                 parmData[radii][i].f, parmData[screen][i].f);
     }
+
+    // Now add the residues
+    for (int i = 0; i < parmData[pointers][NRES].i; i++) {
+        residue_pointers_.push_back(parmData[resptr][i].i-1);
+        residue_labels_.push_back(string(parmData[reslab][i].c));
+    }
+    // Make it so the trick of subtracting pointers[n+1]-pointers[n] works even
+    // for the last residue
+    residue_pointers_.push_back(N);
 
     // Now add the bonds
     string bonds = "BONDS_WITHOUT_HYDROGEN";
@@ -321,6 +349,14 @@ void AmberParm::rdparm(string const& filename) {
         bool ignore_end = kk < 0 || ll < 0;
         addDihedral(ii, jj, abs(kk), abs(ll), parmData[dihedralk][ai].f, phase,
                     per, sceefac[ai], scnbfac[ai], ignore_end);
+        // Add this to the exception list (NOT the exclusion list)
+        if (!ignore_end) {
+            if (ii < ll) {
+                exception_list[ii].insert(ll);
+            } else {
+                exception_list[ll].insert(ii);
+            }
+        }
     }
     for (int i = 0; i < mphia; i++) {
         int i5 = i * 5;
@@ -334,9 +370,48 @@ void AmberParm::rdparm(string const& filename) {
         bool ignore_end = kk < 0 || ll < 0;
         addDihedral(ii, jj, abs(kk), abs(ll), parmData[dihedralk][ai].f, phase,
                     per, sceefac[ai], scnbfac[ai], ignore_end);
+        // Add this to the exception list (NOT the exclusion list)
+        if (!ignore_end) {
+            if (ii < ll) {
+                exception_list[ii].insert(ll);
+            } else {
+                exception_list[ll].insert(ii);
+            }
+        }
+    }
+
+    // Now go through and build the exclusion list
+    string num_exclusions = "NUMBER_EXCLUDED_ATOMS";
+    string exclusions = "EXCLUDED_ATOMS_LIST";
+
+    if (parmData.count(num_exclusions) < 1 ||
+            parmData[num_exclusions].size() != N)
+        throw AmberParmError("Bad (or missing) NUMBER_EXCLUDED_ATOMS section");
+    int exclptr = 0;
+    for (int i = 0; i < N; i++) {
+        int nexcl = parmData[num_exclusions][i].i;
+        for (int j = exclptr; j < exclptr + nexcl; j++) {
+            int e = parmData[exclusions][j].i - 1;
+            if (e == 0) continue;
+            if (exception_list[i].count(e) > 0) continue; // it is an exception
+            exclusion_list_[i].insert(e);
+        }
+        exclptr += nexcl;
     }
 }
 
 void AmberParm::rdparm(const char* filename) {
     rdparm(string(filename));
+}
+
+void AmberParm::printExclusions(int i) {
+    cout << "The atoms excluded from atom " << i << " are:" << endl << "\t";
+    if (exclusion_list_[i].size() == 0) {
+        cout << "None." << endl;
+    } else {
+        for (set<int>::const_iterator it = exclusion_list_[i].begin();
+                it != exclusion_list_[i].end(); it++)
+            cout << *it << " ";
+        cout << endl;
+    }
 }
