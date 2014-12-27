@@ -1,2 +1,3 @@
-amberparm.cpp: ../include/amberparm.h ../include/exceptions.h
-readparm.cpp: ../include/readparm.h
+amberparm.o: amberparm.cpp ../include/amberparm.h ../include/exceptions.h
+readparm.o: readparm.cpp ../include/readparm.h
+../include/amberparm.h: ../include/topology.h ../include/readparm.h

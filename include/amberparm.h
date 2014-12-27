@@ -8,6 +8,7 @@
 #ifndef AMBERPARM_H
 #define AMBERPARM_H
 
+#include <cmath>
 #include <string>
 #include <set>
 
@@ -109,7 +110,14 @@ class AmberParm {
 };
 
 // Some conversion constants
-//static const double 
+static const double ANGSTROM_PER_NANOMETER = 10.0;
+static const double JOULE_PER_CALORIE = 4.814;
+static const double DEGREE_PER_RADIAN = 180.0 / M_PI;
+
+static const double NANOMETER_PER_ANGSTROM = 1 / ANGSTROM_PER_NANOMETER;
+static const double CALORIE_PER_JOULE = 1 / JOULE_PER_CALORIE;
+static const double RADIAN_PER_DEGREE = 1 / DEGREE_PER_RADIAN;
+
 }; // namespace Amber
 
 #endif /* AMBERPARM_H */

@@ -26,3 +26,5 @@ depends::
 lib: $(OBJS)
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(MAKESHARED) $(OBJS) -o libcphmd$(SHARED_EXT)
 	ar -rcs libcphmd.a $(OBJS)
+
+include depends

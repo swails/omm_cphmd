@@ -6,19 +6,30 @@ incre = re.compile(r'# *include *"(.+\.h)"')
 
 dep = open('depends', 'w')
 
-ignored_headers = ('zlib.h',)
+ignored_headers = ('zlib.h', 'OpenMM.h')
 
 for f in os.listdir('.'):
-   if f.endswith('.F90') or f.endswith('.cpp') or f.endswith('.h') or \
-      f.endswith('.i'):
-      if f in ignored_headers: continue
-      mydep = []
-      fd = open(f, 'r')
-      for line in fd:
-         if incre.match(line):
+    if f.endswith('.F90') or f.endswith('.cpp'):
+        if f in ignored_headers: continue
+        mydep = [f]
+        fd = open(f, 'r')
+        for line in fd:
+            if incre.match(line):
+                d = incre.match(line).groups()[0]
+                if not d in mydep and not d in ignored_headers:
+                    mydep.append('../include/%s' % d)
+        if mydep: dep.write('%s: %s\n' % (f.replace('.cpp', '.o').replace('.F90', '.o'), ' '.join(mydep)))
+
+for f in os.listdir('../include'):
+    if f in ignored_headers: continue
+    mydep = []
+    f = os.path.join('..', 'include', f)
+    fd = open(f, 'r')
+    for line in fd:
+        if incre.match(line):
             d = incre.match(line).groups()[0]
             if not d in mydep and not d in ignored_headers:
-               mydep.append('../include/%s' % d)
-      if mydep: dep.write('%s: %s\n' % (f, ' '.join(mydep)))
+                mydep.append('../include/%s' % d)
+    if mydep: dep.write('%s: %s\n' % (f, ' '.join(mydep)))
 
 dep.close()

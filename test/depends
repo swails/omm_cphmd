@@ -1,2 +1,3 @@
-AmberParmTest.cpp: ../include/amberparm.h ../include/exceptions.h
-TopologyTest.cpp: ../include/topology.h
+AmberParmTest.o: AmberParmTest.cpp ../include/amberparm.h ../include/exceptions.h
+TopologyTest.o: TopologyTest.cpp ../include/topology.h
+../include/amberparm.h: ../include/topology.h ../include/readparm.h
