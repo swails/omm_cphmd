@@ -7,7 +7,7 @@
 
 #include <stdexcept>
 
-namespace CpHMD {
+namespace Amber {
 
 class AmberParmError : public std::runtime_error {
     public:

@@ -14,7 +14,9 @@
 #include "topology.h"
 #include "readparm.h"
 
-namespace CpHMD {
+#include "OpenMM.h"
+
+namespace Amber {
 
 class AmberParm {
     public:
@@ -106,6 +108,6 @@ class AmberParm {
         std::vector<std::set<int> > exclusion_list_;
 };
 
-};
+}; // namespace Amber
 
 #endif /* AMBERPARM_H */

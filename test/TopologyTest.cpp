@@ -8,9 +8,9 @@
 using namespace std;
 
 void check_atoms(void) {
-    CpHMD::Atom my_atom(0, string("CA"), string("CX"), 6, 12.01,
+    Amber::Atom my_atom(0, string("CA"), string("CX"), 6, 12.01,
                         0.3, 1.0, 0.5, 1.2, 0.85);
-    CpHMD::Atom my_atom2(0, "CB", "CT", 6, 12.01, 0.4, 1.05, 0.5, 1.18, 0.80);
+    Amber::Atom my_atom2(0, "CB", "CT", 6, 12.01, 0.4, 1.05, 0.5, 1.18, 0.80);
 
     // Check the first atom
     assert(my_atom.getName() == "CA");
@@ -35,14 +35,14 @@ void check_atoms(void) {
     assert(my_atom2.getGBScreen() == 0.80);
 
     // Now check the atom list
-    CpHMD::AtomList atoms;
+    Amber::AtomList atoms;
     for (int i = 0; i < 10; i++) {
-        atoms.push_back(CpHMD::Atom(i, "CA", "CX", 6, 12.01, 0.3,
+        atoms.push_back(Amber::Atom(i, "CA", "CX", 6, 12.01, 0.3,
                                     1.0, 0.5, 1.2, 0.85));
     }
 
     int i = 0;
-    for (CpHMD::AtomList::const_iterator it = atoms.begin(); 
+    for (Amber::AtomList::const_iterator it = atoms.begin(); 
          it != atoms.end(); it++) {
         assert(it->getIndex() == i++);
         assert(it->getName() == "CA");
@@ -57,8 +57,8 @@ void check_atoms(void) {
 }
 
 void check_bonds(void) {
-    CpHMD::Bond my_bond(0, 1, 100.0, 1.2);
-    CpHMD::Bond my_bond2(1, 2, 150.0, 1.0);
+    Amber::Bond my_bond(0, 1, 100.0, 1.2);
+    Amber::Bond my_bond2(1, 2, 150.0, 1.0);
 
     // Check the first bond
     assert(my_bond.getForceConstant() == 100.0);
@@ -73,13 +73,13 @@ void check_bonds(void) {
     assert(my_bond.getAtomJ() == 1);
 
     // Now check the bond list
-    CpHMD::BondList bonds;
+    Amber::BondList bonds;
     for (int i = 0; i < 10; i++) {
-        bonds.push_back(CpHMD::Bond(i, i+1, 100.0, 1.2));
+        bonds.push_back(Amber::Bond(i, i+1, 100.0, 1.2));
     }
 
     int i = 0;
-    for (CpHMD::BondList::const_iterator it = bonds.begin(); it != bonds.end();
+    for (Amber::BondList::const_iterator it = bonds.begin(); it != bonds.end();
          it++) {
         assert(it->getAtomI() == i++);
         assert(it->getAtomJ() == i);
@@ -89,7 +89,7 @@ void check_bonds(void) {
 }
 
 void check_angles(void) {
-    CpHMD::Angle my_angle(0, 1, 2, 20.0, 109.5);
+    Amber::Angle my_angle(0, 1, 2, 20.0, 109.5);
 
     // Check the angle
     assert(my_angle.getForceConstant() == 20.0);
@@ -99,13 +99,13 @@ void check_angles(void) {
     assert(my_angle.getAtomK() == 2);
 
     // Now check the angle list
-    CpHMD::AngleList angles;
+    Amber::AngleList angles;
     for (int i = 0; i < 10; i++) {
-        angles.push_back(CpHMD::Angle(i, i+1, i+2, 50.0, 109.47));
+        angles.push_back(Amber::Angle(i, i+1, i+2, 50.0, 109.47));
     }
 
     int i = 0;
-    for (CpHMD::AngleList::const_iterator it = angles.begin();
+    for (Amber::AngleList::const_iterator it = angles.begin();
          it != angles.end(); it++) {
         assert(it->getAtomI() == i++);
         assert(it->getAtomJ() == i);
@@ -116,8 +116,8 @@ void check_angles(void) {
 }
 
 void check_dihedrals(void) {
-    CpHMD::Dihedral my_dihedral(0, 1, 2, 3, 10.0, 180.0, 2, 1.2, 2.0, false);
-    CpHMD::Dihedral my_dihedral2(1, 2, 3, 4, 20.0, 0.0, 4, 1.2, 2.0, true);
+    Amber::Dihedral my_dihedral(0, 1, 2, 3, 10.0, 180.0, 2, 1.2, 2.0, false);
+    Amber::Dihedral my_dihedral2(1, 2, 3, 4, 20.0, 0.0, 4, 1.2, 2.0, true);
 
     // Check the dihedral
     assert(my_dihedral.getForceConstant() == 10);
@@ -144,14 +144,14 @@ void check_dihedrals(void) {
     assert(my_dihedral2.getAtomL() == 4);
 
     // Now check the dihedral list
-    CpHMD::DihedralList dihedrals;
+    Amber::DihedralList dihedrals;
     for (int i = 0; i < 10; i++) {
-        dihedrals.push_back(CpHMD::Dihedral(i, i+1, i+2, i+3, 10.0, 180.0,
+        dihedrals.push_back(Amber::Dihedral(i, i+1, i+2, i+3, 10.0, 180.0,
                                             2, 1.0, 1.0, false));
     }
 
     int i = 0;
-    for (CpHMD::DihedralList::const_iterator it = dihedrals.begin();
+    for (Amber::DihedralList::const_iterator it = dihedrals.begin();
          it != dihedrals.end(); it++) {
         assert(it->getAtomI() == i++);
         assert(it->getAtomJ() == i);

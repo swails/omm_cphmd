@@ -9,6 +9,8 @@
 
 #define MAX_HOLLERITH_SIZE 8
 
+namespace Amber {
+
 // Return codes
 enum ExitStatus {OK=0, NOOPEN=1, EMPTY=2, NOVERSION=3, ERR=4};
 
@@ -109,5 +111,7 @@ enum PARM_POINTERS {
         MBPER,    MGPER,  MDPER,  IFBOX,  NMXRS,  IFCAP,
         NUMEXTRA, NCOPY
 };
+
+}; // namespace Amber
 
 #endif /* READPARM_H */

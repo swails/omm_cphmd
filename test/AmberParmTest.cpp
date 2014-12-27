@@ -11,9 +11,9 @@
 using namespace std;
 
 void check_add_atoms(void) {
-    CpHMD::AmberParm parm;
+    Amber::AmberParm parm;
 
-    CpHMD::Atom atom(0, "N", "N3", 7, 14.01, -1.0, 0.95,
+    Amber::Atom atom(0, "N", "N3", 7, 14.01, -1.0, 0.95,
                      0.1, 1.3, 0.85);
     parm.addAtom(atom);
     parm.addAtom("H1", "H", 1, 1.008, 1.0, 0.5, 0.1, 0.8, 0.85);
@@ -22,27 +22,27 @@ void check_add_atoms(void) {
 }
 
 void check_bad_add_atoms(void) {
-    CpHMD::AmberParm parm;
+    Amber::AmberParm parm;
 
     bool caught = false;
     try {
-        CpHMD::Atom atom(1, "N", "N3", 7, 14.01, -1.0, 0.95,
+        Amber::Atom atom(1, "N", "N3", 7, 14.01, -1.0, 0.95,
                          0.1, 1.3, 0.85);
         parm.addAtom(atom);
-    } catch (CpHMD::AmberParmError &e) {
+    } catch (Amber::AmberParmError &e) {
         caught = true;
     }
     assert(caught);
 }
 
 void check_add_bonds(void) {
-    CpHMD::AmberParm parm;
+    Amber::AmberParm parm;
 
     parm.addAtom("N", "N3", 7, 14.01, -1.0, 0.95, 0.1, 1.3, 0.85);
     parm.addAtom("H1", "H", 1, 1.008, 0.5, 0.5, 0.05, 0.8, 0.85);
     parm.addAtom("H2", "H", 1, 1.008, 0.5, 0.5, 0.05, 0.8, 0.85);
 
-    CpHMD::Bond bond(0, 1, 500.0, 0.8);
+    Amber::Bond bond(0, 1, 500.0, 0.8);
     parm.addBond(bond);
     parm.addBond(1, 2, 500.0, 0.8);
 
@@ -60,12 +60,12 @@ void check_add_bonds(void) {
 }
 
 void check_bad_add_bonds(void) {
-    CpHMD::AmberParm parm;
+    Amber::AmberParm parm;
 
     bool caught = false;
     try {
         parm.addBond(0, 1, 500.0, 1.0);
-    } catch (CpHMD::AmberParmError &e) {
+    } catch (Amber::AmberParmError &e) {
         caught = true;
     }
 
@@ -73,9 +73,9 @@ void check_bad_add_bonds(void) {
 }
 
 void check_add_angles(void) {
-    CpHMD::AmberParm parm;
+    Amber::AmberParm parm;
 
-    CpHMD::Angle angle(0, 1, 2, 50.0, 109.47);
+    Amber::Angle angle(0, 1, 2, 50.0, 109.47);
 
     parm.addAtom("N", "N", 7, 14.01, -1.0, 0.8, 0.1, 1.2, 0.85);
     parm.addAtom("CA", "CT", 6, 12.01, 0.5, 0.9, 0.15, 1.3, 0.85);
@@ -103,12 +103,12 @@ void check_add_angles(void) {
 }
 
 void check_bad_add_angles(void) {
-    CpHMD::AmberParm parm;
+    Amber::AmberParm parm;
 
     bool caught = false;
     try {
         parm.addAngle(0, 1, 2, 500.0, 1.0);
-    } catch (CpHMD::AmberParmError &e) {
+    } catch (Amber::AmberParmError &e) {
         caught = true;
     }
 
@@ -116,10 +116,10 @@ void check_bad_add_angles(void) {
 }
 
 void check_add_dihedrals(void) {
-    CpHMD::AmberParm parm;
+    Amber::AmberParm parm;
 
-    CpHMD::Dihedral dihed(0, 1, 2, 3, 50.0, 180.0, 2, 1.2, 2.0, true);
-    CpHMD::Dihedral dihed2(0, 1, 2, 3, 20.0, 0.0, 3, 1.2, 2.0, false);
+    Amber::Dihedral dihed(0, 1, 2, 3, 50.0, 180.0, 2, 1.2, 2.0, true);
+    Amber::Dihedral dihed2(0, 1, 2, 3, 20.0, 0.0, 3, 1.2, 2.0, false);
 
     parm.addAtom("N", "N", 7, 14.01, -1.0, 0.8, 0.1, 1.2, 0.85);
     parm.addAtom("CA", "CT", 6, 12.01, 0.5, 0.9, 0.15, 1.3, 0.85);
@@ -161,12 +161,12 @@ void check_add_dihedrals(void) {
 }
 
 void check_bad_add_dihedrals(void) {
-    CpHMD::AmberParm parm;
+    Amber::AmberParm parm;
 
     bool caught = false;
     try {
         parm.addDihedral(0, 1, 2, 3, 50.0, 180.0, 2, 1.2, 2.0, false);
-    } catch (CpHMD::AmberParmError &e) {
+    } catch (Amber::AmberParmError &e) {
         caught = true;
     }
 
@@ -174,7 +174,7 @@ void check_bad_add_dihedrals(void) {
 }
 
 void check_rdparm(void) {
-    CpHMD::AmberParm parm;
+    Amber::AmberParm parm;
 
     parm.rdparm("trx.prmtop");
 
@@ -244,12 +244,12 @@ void check_rdparm(void) {
     assert(parm.ResiduePointers()[108] - parm.ResiduePointers()[107] == 11);
 
     // Check the exclusions
-    for (CpHMD::AmberParm::bond_iterator it = parm.BondBegin();
+    for (Amber::AmberParm::bond_iterator it = parm.BondBegin();
             it != parm.BondEnd(); it++) {
         assert(parm.isExcluded(it->getAtomI(), it->getAtomJ()));
         assert(parm.isExcluded(it->getAtomJ(), it->getAtomI()));
     }
-    for (CpHMD::AmberParm::angle_iterator it = parm.AngleBegin();
+    for (Amber::AmberParm::angle_iterator it = parm.AngleBegin();
             it != parm.AngleEnd(); it++) {
         assert(parm.isExcluded(it->getAtomI(), it->getAtomJ()));
         assert(parm.isExcluded(it->getAtomJ(), it->getAtomI()));
@@ -261,7 +261,7 @@ void check_rdparm(void) {
     /* Make sure the exceptions (i.e., 1-4s that are NOT excluded) are NOT part
      * of the exceptions.
      */
-    for (CpHMD::AmberParm::dihedral_iterator it = parm.DihedralBegin();
+    for (Amber::AmberParm::dihedral_iterator it = parm.DihedralBegin();
             it != parm.DihedralEnd(); it++) {
         bool ignore_end = it->ignoreEndGroups();
         if (!ignore_end) {

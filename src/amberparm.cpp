@@ -7,7 +7,7 @@
 #include <iostream>
 
 using namespace std;
-using namespace CpHMD;
+using namespace Amber;
 
 AmberParm::AmberParm(string const& filename) {
     rdparm(filename);
