@@ -10,9 +10,10 @@
 #include "readparm.h"
 
 using namespace std;
+using namespace Amber;
 
 /// Determine how the data is formatted based on the Fortran format statement
-ParmDataType parseFormat(const string &fmt, int &ncols, int &width) {
+ParmDataType Amber::parseFormat(const string &fmt, int &ncols, int &width) {
     string up = upper(fmt);
     int i, j, k;
     if (sscanf(up.c_str(), "%dA%d", &i, &j) == 2) {
@@ -45,10 +46,10 @@ ParmDataType parseFormat(const string &fmt, int &ncols, int &width) {
 }
 
 /// Parse the actual topology file and store all of the data in hash tables
-ExitStatus readparm(const string &fname, vector<string> &flagList,
-                    ParmDataMap &parmData, ParmStringMap &parmComments,
-                    ParmStringMap &unkParmData, ParmFormatMap &parmFormats,
-                    string &version) {
+ExitStatus Amber::readparm(const string &fname, vector<string> &flagList,
+                           ParmDataMap &parmData, ParmStringMap &parmComments,
+                           ParmStringMap &unkParmData, ParmFormatMap &parmFormats,
+                           string &version) {
 
     string line;
 
@@ -103,7 +104,8 @@ ExitStatus readparm(const string &fname, vector<string> &flagList,
                 size_t start = line.find_first_of('(') + 1;
                 size_t end = line.find_last_of(')');
                 string fmt = line.substr(start, end-start);
-                curtype = parseFormat(fmt, ncols, width);
+                // why is Amber:: needed here?
+                curtype = Amber::parseFormat(fmt, ncols, width);
                 ParmFormatType typ;
                 typ.dataType = curtype;
                 typ.fmt = fmt;

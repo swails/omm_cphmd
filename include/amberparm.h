@@ -108,6 +108,8 @@ class AmberParm {
         std::vector<std::set<int> > exclusion_list_;
 };
 
+// Some conversion constants
+//static const double 
 }; // namespace Amber
 
 #endif /* AMBERPARM_H */
