@@ -269,6 +269,9 @@ void check_rdparm(void) {
             assert(!parm.isExcluded(it->getAtomL(), it->getAtomI()));
         }
     }
+
+    assert(!parm.isPeriodic());
+    assert(parm.IfBox() == 0);
 }
 
 int main() {

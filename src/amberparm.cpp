@@ -153,6 +153,7 @@ void AmberParm::rdparm(string const& filename) {
         throw AmberParmError("Missing POINTERS in prmtop");
     int N = parmData[pointers][NATOM].i;
     int NR = parmData[pointers][NRES].i;
+    ifbox_ = parmData[pointers][IFBOX].i;
 
     // Allocate space for the exclusion and exception lists
     exclusion_list_.reserve(N);
@@ -415,3 +416,154 @@ void AmberParm::printExclusions(int i) {
         cout << endl;
     }
 }
+
+OpenMM::System* AmberParm::createSystem(
+                OpenMM::NonbondedForce::NonbondedMethod nonbondedMethod=OpenMM::NonbondedForce::NoCutoff,
+                double nonbondedCutoff=10.0,
+                std::string constraints=std::string("None"),
+                bool rigidWater=false,
+                std::string implicitSolvent=std::string("None"),
+                double implicitSolventKappa=0.0,
+                double implicitSolventSaltConc=0.0,
+                double temperature=298.15,
+                double soluteDielectric=1.0,
+                double solventDielectric=78.5,
+                bool removeCMMotion=true,
+                double ewaldErrorTolerance=0.0005,
+                bool flexibleConstraints=true) {
+
+    OpenMM::System* system = new OpenMM::System();
+
+    // Make sure we have a legal choice for constraints and implicitSolvent
+    if (constraints != "None" && constraints != "HBonds" &&
+            constraints != "AllBonds") {
+        string msg = "constraints must be None, HBonds, or AllBonds; not " +
+                     constraints;
+        throw AmberParmError(msg.c_str());
+    }
+
+    if (implicitSolvent != "None" && implicitSolvent != "HCT" &&
+            implicitSolvent != "OBC1" && implicitSolvent != "OBC2" &&
+            implicitSolvent != "GBn" && implicitSolvent != "GBn2") {
+        string msg = "implicitSolvent must be None, HCT, OBC1, OBC2, GBn, or "
+                     "GBn2; not " + implicitSolvent;
+        throw AmberParmError(msg.c_str());
+    }
+
+    if (rigidWater && (constraints != "HBonds" && constraints != "AllBonds")) {
+        cerr << "rigidWater is incompatible with constraints=None; setting to "
+             << "false" << endl;
+    }
+
+    // Catch illegal nonbonded choice for system
+
+    if (isPeriodic()) {
+        if (nonbondedMethod == OpenMM::NonbondedForce::CutoffNonPeriodic ||
+                nonbondedMethod == OpenMM::NonbondedForce::NoCutoff)
+            throw AmberParmError("Illegal nonbondedForce choice for periodic system");
+    } else {
+        if (nonbondedMethod == OpenMM::NonbondedForce::CutoffPeriodic ||
+                nonbondedMethod == OpenMM::NonbondedForce::PME ||
+                nonbondedMethod == OpenMM::NonbondedForce::Ewald)
+            throw AmberParmError("Illegal nonbondedForce choice for non-periodic system");
+    }
+
+    // Add all particles
+    for (atom_iterator it = AtomBegin(); it != AtomEnd(); it++) {
+        system->addParticle(it->getMass());
+    }
+
+    // Add constraints
+    bool hcons = constraints == "HBonds" || constraints == "AllBonds";
+    bool allcons = constraints == "AllBonds";
+    for (bond_iterator it = BondBegin(); it != BondEnd(); it++) {
+        Atom a1 = atoms_[it->getAtomI()];
+        Atom a2 = atoms_[it->getAtomJ()];
+        if (hcons && (a1.getElement() == 1 || a2.getElement() == 1)) {
+            system->addConstraint(it->getAtomI(), it->getAtomJ(),
+                                  it->getEquilibriumDistance()*NANOMETER_PER_ANGSTROM);
+        } else if (allcons) {
+            system->addConstraint(it->getAtomI(), it->getAtomJ(),
+                                  it->getEquilibriumDistance()*NANOMETER_PER_ANGSTROM);
+        }
+    }
+    
+    // Add all bonds
+    if (!allcons || flexibleConstraints) {
+        OpenMM::HarmonicBondForce *bond_force = new OpenMM::HarmonicBondForce();
+        bond_force->setForceGroup(BOND_FORCE_GROUP);
+        double conv = ANGSTROM_PER_NANOMETER*ANGSTROM_PER_NANOMETER*JOULE_PER_CALORIE;
+        for (bond_iterator it=BondBegin(); it != BondEnd(); it++) {
+            // See if this bond needs to be skipped due to constraints
+            Atom a1 = atoms_[it->getAtomI()];
+            Atom a2 = atoms_[it->getAtomJ()];
+            if (hcons && (a1.getElement() == 1 || a2.getElement() == 1) &&
+                        !flexibleConstraints) continue;
+
+            bond_force->addBond(it->getAtomI(), it->getAtomJ(),
+                                it->getEquilibriumDistance()*NANOMETER_PER_ANGSTROM,
+                                2*it->getForceConstant()*conv);
+        }
+        system->addForce(bond_force);
+    }
+
+    // Add all angles
+    OpenMM::HarmonicAngleForce *angle_force = new OpenMM::HarmonicAngleForce();
+    angle_force->setForceGroup(ANGLE_FORCE_GROUP);
+    for (angle_iterator it = AngleBegin(); it != AngleEnd(); it++) {
+        angle_force->addAngle(it->getAtomI(), it->getAtomJ(), it->getAtomK(),
+                              it->getEquilibriumAngle()*RADIAN_PER_DEGREE,
+                              2*it->getForceConstant()*JOULE_PER_CALORIE);
+    }
+    system->addForce(angle_force);
+
+    // Add all torsions
+    OpenMM::PeriodicTorsionForce *dihedral_force = new OpenMM::PeriodicTorsionForce();
+    dihedral_force->setForceGroup(DIHEDRAL_FORCE_GROUP);
+    for (dihedral_iterator it = DihedralBegin(); it != DihedralEnd(); it++) {
+        dihedral_force->addTorsion(it->getAtomI(), it->getAtomJ(),
+                                   it->getAtomK(), it->getAtomL(),
+                                   it->getPeriodicity(),
+                                   it->getPhase()*RADIAN_PER_DEGREE,
+                                   it->getForceConstant()*JOULE_PER_CALORIE);
+    }
+    system->addForce(dihedral_force);
+
+    // Add nonbonded force
+    OpenMM::NonbondedForce *nonb_frc = new OpenMM::NonbondedForce();
+    nonb_frc->setForceGroup(NONBONDED_FORCE_GROUP);
+    nonb_frc->setNonbondedMethod(nonbondedMethod);
+    if (nonbondedMethod != OpenMM::NonbondedForce::NoCutoff)
+        nonb_frc->setCutoffDistance(nonbondedCutoff*NANOMETER_PER_ANGSTROM);
+    const double ONE_SIXTH = 1.0 / 6.0;
+    const double SIGMA_SCALE = pow(2, -ONE_SIXTH) * 2 * NANOMETER_PER_ANGSTROM;
+    for (atom_iterator it = AtomBegin(); it != AtomEnd(); it++) {
+        nonb_frc->addParticle(it->getCharge(),
+                              it->getLJRadius()*SIGMA_SCALE,
+                              it->getLJEpsilon()*JOULE_PER_CALORIE);
+    }
+    // Now do exceptions
+    for (dihedral_iterator it = DihedralBegin(); it != DihedralEnd(); it++) {
+        if (it->ignoreEndGroups()) continue;
+        Atom a1 = atoms_[it->getAtomI()];
+        Atom a2 = atoms_[it->getAtomL()];
+        double eps = sqrt(a1.getLJEpsilon() * a2.getLJEpsilon()) *
+                     JOULE_PER_CALORIE / it->getScnb();
+        double sig = (a1.getLJRadius() + a2.getLJRadius()) * SIGMA_SCALE;
+        nonb_frc->addException(it->getAtomI(), it->getAtomL(),
+                               a1.getCharge()*a2.getCharge()/it->getScee(),
+                               sig, eps);
+    }
+    // Now do exclusions
+    for (int i = 0; i < atoms_.size(); i++) {
+        if (exclusion_list_[i].size() == 0) continue; // No exclusions here
+        for (set<int>::const_iterator it = exclusion_list_[i].begin();
+                it != exclusion_list_[i].end(); it++) {
+            nonb_frc->addException(i, *it, 0.0, 0.0, 0.5);
+        }
+    }
+    system->addForce(nonb_frc);
+
+    return system;
+}
+

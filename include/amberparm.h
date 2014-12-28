@@ -25,7 +25,7 @@ class AmberParm {
           * the topology and parameters. If a filename is passed to the
           * constructor, it is read.
           */
-        AmberParm(void) {}
+        AmberParm(void) : ifbox_(0) {}
         AmberParm(std::string const& filename);
         AmberParm(const char* filename);
 
@@ -85,7 +85,7 @@ class AmberParm {
         /** Returns true if 2 atoms are excluded or false if they are not (note,
           * exceptions, like the 1-4 interactions, do NOT count as exclusions)
           */
-        bool isExcluded(int i, int j) {
+        bool isExcluded(int i, int j) const {
             if (i == j) return true;
             if (i < j) {
                 return exclusion_list_[i].count(j) > 0;
@@ -93,13 +93,36 @@ class AmberParm {
             return exclusion_list_[j].count(i) > 0;
         }
 
+        /** Returns true if the system uses periodic bondaries and false
+          * otherwise
+          */
+        bool isPeriodic(void) const {return ifbox_ > 0;}
+        int IfBox(void) const {return ifbox_;}
+
         void printExclusions(int i);
 
         /// Read a prmtop file and instantiate a structure from it.
         void rdparm(std::string const& filename);
         void rdparm(const char* filename);
 
+        /// Create an OpenMM System
+        OpenMM::System* createSystem(
+                OpenMM::NonbondedForce::NonbondedMethod nonbondedMethod,
+                double nonbondedCutoff,
+                std::string constraints,
+                bool rigidWater,
+                std::string implicitSolvent,
+                double implicitSolventKappa,
+                double implicitSolventSaltConc,
+                double temperature,
+                double soluteDielectric,
+                double solventDielectric,
+                bool removeCMMotion,
+                double ewaldErrorTolerance,
+                bool flexibleConstraints);
+
     private:
+        int ifbox_;
         AtomList atoms_;
         BondList bonds_;
         AngleList angles_;
@@ -117,6 +140,9 @@ static const double DEGREE_PER_RADIAN = 180.0 / M_PI;
 static const double NANOMETER_PER_ANGSTROM = 1 / ANGSTROM_PER_NANOMETER;
 static const double CALORIE_PER_JOULE = 1 / JOULE_PER_CALORIE;
 static const double RADIAN_PER_DEGREE = 1 / DEGREE_PER_RADIAN;
+
+enum ForceGroup {BOND_FORCE_GROUP=0, ANGLE_FORCE_GROUP, DIHEDRAL_FORCE_GROUP,
+                 NONBONDED_FORCE_GROUP};
 
 }; // namespace Amber
 
