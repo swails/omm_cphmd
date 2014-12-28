@@ -9,8 +9,9 @@ compiler:
     - clang
 script:
     - sudo sh devtools/ci/install.sh
-    - export OPENMM_INCLUDE_PATH=/usr/include
-    - export OPENMM_LIB_PATH=/usr/lib
+    - export OPENMM_INCLUDE_PATH=/usr/local/openmm/include
+    - export OPENMM_LIB_PATH=/usr/local/openmm/lib
+    - export LD_LIBRARY_PATH=/usr/local/openmm/lib
     - ./configure
     - make install
-    - make test
+    - make -e LD_LIBRARY_PATH=/usr/local/openmm/lib:`pwd`/lib test
