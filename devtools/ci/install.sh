@@ -9,7 +9,7 @@ cd OpenMM-6.2.0-Linux/
 sudo mkdir -p /usr/local/openmm
 
 sudo ./install.sh << EOF
-
+/usr/
 
 EOF
 
