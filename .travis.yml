@@ -14,4 +14,4 @@ script:
     - export LD_LIBRARY_PATH=/usr/local/openmm/lib
     - ./configure
     - make install
-    - make test
+    - make -e LD_LIBRARY_PATH=/usr/local/openmm/lib test
