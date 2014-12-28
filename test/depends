@@ -1,3 +1,4 @@
 AmberParmTest.o: AmberParmTest.cpp ../include/amberparm.h ../include/exceptions.h
+OpenMMTest.o: OpenMMTest.cpp ../include/amberparm.h
 TopologyTest.o: TopologyTest.cpp ../include/topology.h
 ../include/amberparm.h: ../include/topology.h ../include/readparm.h

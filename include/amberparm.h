@@ -107,19 +107,19 @@ class AmberParm {
 
         /// Create an OpenMM System
         OpenMM::System* createSystem(
-                OpenMM::NonbondedForce::NonbondedMethod nonbondedMethod,
-                double nonbondedCutoff,
-                std::string constraints,
-                bool rigidWater,
-                std::string implicitSolvent,
-                double implicitSolventKappa,
-                double implicitSolventSaltConc,
-                double temperature,
-                double soluteDielectric,
-                double solventDielectric,
-                bool removeCMMotion,
-                double ewaldErrorTolerance,
-                bool flexibleConstraints);
+            OpenMM::NonbondedForce::NonbondedMethod nonbondedMethod=OpenMM::NonbondedForce::NoCutoff,
+            double nonbondedCutoff=10.0,
+            std::string constraints=std::string("None"),
+            bool rigidWater=false,
+            std::string implicitSolvent=std::string("None"),
+            double implicitSolventKappa=0.0,
+            double implicitSolventSaltConc=0.0,
+            double temperature=298.15,
+            double soluteDielectric=1.0,
+            double solventDielectric=78.5,
+            bool removeCMMotion=true,
+            double ewaldErrorTolerance=0.0005,
+            bool flexibleConstraints=true);
 
     private:
         int ifbox_;
@@ -134,7 +134,7 @@ class AmberParm {
 
 // Some conversion constants
 static const double ANGSTROM_PER_NANOMETER = 10.0;
-static const double JOULE_PER_CALORIE = 4.814;
+static const double JOULE_PER_CALORIE = 4.184;
 static const double DEGREE_PER_RADIAN = 180.0 / M_PI;
 
 static const double NANOMETER_PER_ANGSTROM = 1 / ANGSTROM_PER_NANOMETER;

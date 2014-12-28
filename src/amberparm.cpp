@@ -393,7 +393,7 @@ void AmberParm::rdparm(string const& filename) {
         int nexcl = parmData[num_exclusions][i].i;
         for (int j = exclptr; j < exclptr + nexcl; j++) {
             int e = parmData[exclusions][j].i - 1;
-            if (e == 0) continue;
+            if (e < 0) continue;
             if (exception_list[i].count(e) > 0) continue; // it is an exception
             exclusion_list_[i].insert(e);
         }
@@ -418,19 +418,19 @@ void AmberParm::printExclusions(int i) {
 }
 
 OpenMM::System* AmberParm::createSystem(
-                OpenMM::NonbondedForce::NonbondedMethod nonbondedMethod=OpenMM::NonbondedForce::NoCutoff,
-                double nonbondedCutoff=10.0,
-                std::string constraints=std::string("None"),
-                bool rigidWater=false,
-                std::string implicitSolvent=std::string("None"),
-                double implicitSolventKappa=0.0,
-                double implicitSolventSaltConc=0.0,
-                double temperature=298.15,
-                double soluteDielectric=1.0,
-                double solventDielectric=78.5,
-                bool removeCMMotion=true,
-                double ewaldErrorTolerance=0.0005,
-                bool flexibleConstraints=true) {
+                OpenMM::NonbondedForce::NonbondedMethod nonbondedMethod,
+                double nonbondedCutoff,
+                std::string constraints,
+                bool rigidWater,
+                std::string implicitSolvent,
+                double implicitSolventKappa,
+                double implicitSolventSaltConc,
+                double temperature,
+                double soluteDielectric,
+                double solventDielectric,
+                bool removeCMMotion,
+                double ewaldErrorTolerance,
+                bool flexibleConstraints) {
 
     OpenMM::System* system = new OpenMM::System();
 
@@ -543,13 +543,14 @@ OpenMM::System* AmberParm::createSystem(
                               it->getLJEpsilon()*JOULE_PER_CALORIE);
     }
     // Now do exceptions
+    const double SIGMA_SCALE2 = pow(2, -ONE_SIXTH) * NANOMETER_PER_ANGSTROM;
     for (dihedral_iterator it = DihedralBegin(); it != DihedralEnd(); it++) {
         if (it->ignoreEndGroups()) continue;
         Atom a1 = atoms_[it->getAtomI()];
         Atom a2 = atoms_[it->getAtomL()];
         double eps = sqrt(a1.getLJEpsilon() * a2.getLJEpsilon()) *
                      JOULE_PER_CALORIE / it->getScnb();
-        double sig = (a1.getLJRadius() + a2.getLJRadius()) * SIGMA_SCALE;
+        double sig = (a1.getLJRadius() + a2.getLJRadius()) * SIGMA_SCALE2;
         nonb_frc->addException(it->getAtomI(), it->getAtomL(),
                                a1.getCharge()*a2.getCharge()/it->getScee(),
                                sig, eps);
@@ -559,7 +560,7 @@ OpenMM::System* AmberParm::createSystem(
         if (exclusion_list_[i].size() == 0) continue; // No exclusions here
         for (set<int>::const_iterator it = exclusion_list_[i].begin();
                 it != exclusion_list_[i].end(); it++) {
-            nonb_frc->addException(i, *it, 0.0, 0.0, 0.5);
+            nonb_frc->addException(i, *it, 0.0, 1.0, 0.0);
         }
     }
     system->addForce(nonb_frc);
