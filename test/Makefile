@@ -5,10 +5,10 @@ test:: clean TopologyTest AmberParmTest
 	./AmberParmTest && /bin/rm ./AmberParmTest
 
 TopologyTest: TopologyTest.cpp
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -I../include -o TopologyTest TopologyTest.cpp -L../lib -lcphmd
+	$(CXX) $(CXXFLAGS) -I../include -o TopologyTest TopologyTest.cpp ../lib/libcphmd.a $(LDFLAGS)
 
 AmberParmTest: AmberParmTest.cpp
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -I../include -o AmberParmTest AmberParmTest.cpp -L../lib -lcphmd
+	$(CXX) $(CXXFLAGS) -I../include -o AmberParmTest AmberParmTest.cpp ../lib/libcphmd.a $(LDFLAGS)
 
 clean:
 	/bin/rm -f TopologyTest AmberParmTest

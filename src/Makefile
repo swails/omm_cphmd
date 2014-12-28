@@ -24,7 +24,7 @@ depends::
 	$(CXX) -I../include $(CXXFLAGS) -c $*.cpp
 
 lib: $(OBJS)
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) $(MAKESHARED) $(OBJS) -o libcphmd$(SHARED_EXT)
+	$(CXX) $(CXXFLAGS) $(MAKESHARED) $(OBJS) -o libcphmd$(SHARED_EXT) $(LDFLAGS)
 	ar -rcs libcphmd.a $(OBJS)
 
 include depends
