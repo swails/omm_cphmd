@@ -4,7 +4,7 @@ test:: clean TopologyTest AmberParmTest OpenMMTest CoordinateFileTest
 	./TopologyTest && /bin/rm ./TopologyTest
 	./AmberParmTest && /bin/rm ./AmberParmTest
 	./OpenMMTest && /bin/rm ./OpenMMTest serialized_system.xml
-	./CoordinateFileTest && /bin/rm ./CoordinateFileTest
+	./CoordinateFileTest && /bin/rm ./CoordinateFileTest test.rst7
 
 TopologyTest: TopologyTest.cpp
 	$(CXX) $(CXXFLAGS) -I../include -o TopologyTest TopologyTest.cpp ../lib/libcphmd.a $(LDFLAGS)

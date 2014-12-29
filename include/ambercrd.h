@@ -53,9 +53,9 @@ class AmberCoordinateFrame {
 
         /// Gets and sets periodic boundary parameters
         void setBox(double a, double b, double c,
-                    double alpha=90, double beta=90, double gamma=90) {
+                    double alpha=90, double beta=90, double gama=90) {
             a_ = a; b_ = b; c_ = c;
-            alpha_ = alpha; beta_ = beta; gama_ = gamma;
+            alpha_ = alpha; beta_ = beta; gama_ = gama;
         }
 
         double getBoxA(void) const {return a_;}

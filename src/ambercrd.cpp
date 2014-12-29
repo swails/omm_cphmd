@@ -153,7 +153,9 @@ void AmberCoordinateFrame::writeRst7(const char* filename, bool netcdf) {
     if (velocities_.size() > 0) {
         for (int i = 0; i < natom_; i++) {
             fprintf(file, "%12.7f%12.7f%12.7f",
-                    coordinates_[i][0], coordinates_[i][1], coordinates_[i][2]);
+                    velocities_[i][0]*PS_PER_AMBER_TIME,
+                    velocities_[i][1]*PS_PER_AMBER_TIME,
+                    velocities_[i][2]*PS_PER_AMBER_TIME);
             if (i % 2 == 1) fprintf(file, "\n");
         }
         if (natom_ % 2 == 1) fprintf(file, "\n");
