@@ -18,7 +18,7 @@ using namespace OpenMM;
 void AmberCoordinateFrame::readRst7(string const& filename) {
 
     ifstream input;
-    input.open(filename);
+    input.open(filename.c_str());
     string line;
 
     bool has_velocities = false;
