@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <fstream>
 
+#include "amber_constants.h"
 #include "ambercrd.h"
 //#include "netcdf.h"
 #include "OpenMM.h"
@@ -36,22 +37,26 @@ void AmberCoordinateFrame::readRst7(string const& filename) {
 
     vector<string> words = split(lines[1]);
 
-    if (words.size() == 2) {
+    if (words.size() > 2) {
         has_remd_ = true;
         natom_ = StringToDouble(words[0]);
-        temp0_ = StringToDouble(words[1]);
+//      double time = StringToDouble(words[1]);
+        temp0_ = StringToDouble(words[2]);
+    } else if (words.size() == 2) {
+        natom_ = StringToDouble(words[0]);
+//      double time = StringToDouble(words[1]);
     } else if (words.size() == 1) {
         natom_ = StringToDouble(words[0]);
     } else {
         throw AmberCrdError("Unknown format of Amber inpcrd/restrt");
     }
 
-    if (lines.size() == natom_ + 2) {
-    } else if (lines.size() == natom_ + 3) {
+    if (lines.size() == (natom_+1)/2 + 2) {
+    } else if (lines.size() == (natom_+1)/2 + 3) {
         has_box = true;
-    } else if (lines.size() == natom_ * 2 + 2) {
+    } else if (lines.size() == ((natom_+1)/2) * 2 + 2) {
         has_velocities = true;
-    } else if (lines.size() == natom_ * 2 + 3) {
+    } else if (lines.size() == ((natom_+1)/2) * 2 + 3) {
         has_velocities = true;
         has_box = true;
     } else {
@@ -61,9 +66,9 @@ void AmberCoordinateFrame::readRst7(string const& filename) {
     // Now parse the coordinates
     coordinates_.clear();
     velocities_.clear();
-    coordinates_.resize(natom_);
+    coordinates_.reserve(natom_);
     if (has_velocities)
-        velocities_.resize(natom_);
+        velocities_.reserve(natom_);
 
     int current_line = 2;
     int atomno = 0;
@@ -76,6 +81,7 @@ void AmberCoordinateFrame::readRst7(string const& filename) {
             coordinates_.push_back(OpenMM::Vec3(StringToDouble(lines[cl].substr(36, 12)),
                                                 StringToDouble(lines[cl].substr(48, 12)),
                                                 StringToDouble(lines[cl].substr(60, 12))));
+            ++atomno;
         }
     }
 
@@ -85,13 +91,16 @@ void AmberCoordinateFrame::readRst7(string const& filename) {
         atomno = 0;
         for (int i = 0; i < (natom_+1)/2; i++) {
             int cl = current_line + i;
-            velocities_.push_back(OpenMM::Vec3(StringToDouble(lines[cl].substr(0, 12)),
-                                               StringToDouble(lines[cl].substr(12, 12)),
-                                               StringToDouble(lines[cl].substr(24, 12))));
+            velocities_.push_back(
+                    OpenMM::Vec3(StringToDouble(lines[cl].substr(0, 12)) * AMBER_TIME_PER_PS,
+                                 StringToDouble(lines[cl].substr(12, 12)) * AMBER_TIME_PER_PS,
+                                 StringToDouble(lines[cl].substr(24, 12)) * AMBER_TIME_PER_PS));
             if (++atomno < natom_) {
-                velocities_.push_back(OpenMM::Vec3(StringToDouble(lines[cl].substr(36, 12)),
-                                                   StringToDouble(lines[cl].substr(48, 12)),
-                                                   StringToDouble(lines[cl].substr(60, 12))));
+                velocities_.push_back(
+                        OpenMM::Vec3(StringToDouble(lines[cl].substr(36, 12)) * AMBER_TIME_PER_PS,
+                                     StringToDouble(lines[cl].substr(48, 12)) * AMBER_TIME_PER_PS,
+                                     StringToDouble(lines[cl].substr(60, 12)) * AMBER_TIME_PER_PS));
+                ++atomno;
             }
         }
         current_line += (natom_+1) / 2;
@@ -99,11 +108,11 @@ void AmberCoordinateFrame::readRst7(string const& filename) {
 
     if (has_box) {
         a_ = StringToDouble(lines[current_line].substr(0, 12));
-        b_ = StringToDouble(lines[current_line].substr(0, 12));
-        c_ = StringToDouble(lines[current_line].substr(0, 12));
-        alpha_ = StringToDouble(lines[current_line].substr(0, 12));
-        beta_ = StringToDouble(lines[current_line].substr(12, 12));
-        gama_ = StringToDouble(lines[current_line].substr(24, 12));
+        b_ = StringToDouble(lines[current_line].substr(12, 12));
+        c_ = StringToDouble(lines[current_line].substr(24, 12));
+        alpha_ = StringToDouble(lines[current_line].substr(36, 12));
+        beta_ = StringToDouble(lines[current_line].substr(48, 12));
+        gama_ = StringToDouble(lines[current_line].substr(60, 12));
     }
 }
 

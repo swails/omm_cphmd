@@ -132,15 +132,6 @@ class AmberParm {
         std::vector<std::set<int> > exclusion_list_;
 };
 
-// Some conversion constants
-static const double ANGSTROM_PER_NANOMETER = 10.0;
-static const double JOULE_PER_CALORIE = 4.184;
-static const double DEGREE_PER_RADIAN = 180.0 / M_PI;
-
-static const double NANOMETER_PER_ANGSTROM = 1 / ANGSTROM_PER_NANOMETER;
-static const double CALORIE_PER_JOULE = 1 / JOULE_PER_CALORIE;
-static const double RADIAN_PER_DEGREE = 1 / DEGREE_PER_RADIAN;
-
 enum ForceGroup {BOND_FORCE_GROUP=0, ANGLE_FORCE_GROUP, DIHEDRAL_FORCE_GROUP,
                  NONBONDED_FORCE_GROUP};
 

@@ -1,3 +1,7 @@
-amberparm.o: amberparm.cpp ../include/amberparm.h ../include/exceptions.h
+ambercrd.o: ambercrd.cpp ../include/amber_constants.h ../include/ambercrd.h ../include/readparm.h ../include/string_manip.h
+amberparm.o: amberparm.cpp ../include/amber_constants.h ../include/amberparm.h ../include/exceptions.h
 readparm.o: readparm.cpp ../include/readparm.h
+string_manip.o: string_manip.cpp ../include/exceptions.h ../include/string_manip.h
+../include/ambercrd.h: ../include/exceptions.h
 ../include/amberparm.h: ../include/topology.h ../include/readparm.h
+../include/string_manip.h: ../include/exceptions.h

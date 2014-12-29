@@ -1,4 +1,7 @@
 AmberParmTest.o: AmberParmTest.cpp ../include/amberparm.h ../include/exceptions.h
+CoordinateFileTest.o: CoordinateFileTest.cpp ../include/amber_constants.h ../include/ambercrd.h
 OpenMMTest.o: OpenMMTest.cpp ../include/amberparm.h
 TopologyTest.o: TopologyTest.cpp ../include/topology.h
+../include/ambercrd.h: ../include/exceptions.h
 ../include/amberparm.h: ../include/topology.h ../include/readparm.h
+../include/string_manip.h: ../include/exceptions.h

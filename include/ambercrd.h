@@ -65,6 +65,8 @@ class AmberCoordinateFrame {
         double getBoxBeta(void) const {return beta_;}
         double getBoxGamma(void) const {return gama_;}
 
+        int getNatom(void) const {return natom_;}
+
         /// Reads an Amber coordinate file
         void readRst7(std::string const& filename);
         void readRst7(const char* filename);
