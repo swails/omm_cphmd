@@ -1,4 +1,6 @@
-// amberparm.cpp -- contains the functionality
+/* amberparm.cpp -- contains the functionality for reading an Amber topology
+ * file and using that to instantiate an OpenMM System
+ */
 
 #include "amberparm.h"
 #include "exceptions.h"
