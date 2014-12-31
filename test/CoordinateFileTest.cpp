@@ -13,7 +13,7 @@ void check_inpcrd_crd_parsing(void) {
 
     Amber::AmberCoordinateFrame frame;
 
-    frame.readRst7("crdsonly.rst7");
+    frame.readRst7("files/crdsonly.rst7");
 
     assert(frame.getNatom() == 28);
     assert(frame.getPositions().size() == 28);
@@ -28,7 +28,7 @@ void check_inpcrd_crdvel_parsing(void) {
 
     Amber::AmberCoordinateFrame frame;
 
-    frame.readRst7("trx.inpcrd");
+    frame.readRst7("files/trx.inpcrd");
 
     assert(frame.getNatom() == 1654);
     assert(frame.getPositions().size() == 1654);
@@ -47,7 +47,7 @@ void check_inpcrd_crdbox_parsing(void) {
 
     Amber::AmberCoordinateFrame frame;
 
-    frame.readRst7("crds_box.rst7");
+    frame.readRst7("files/crds_box.rst7");
 
     assert(frame.getNatom() == 18660);
     assert(frame.getPositions().size() == 18660);
@@ -69,7 +69,7 @@ void check_inpcrd_crdvelbox_parsing(void) {
 
     Amber::AmberCoordinateFrame frame;
 
-    frame.readRst7("crds_vels_box.rst7");
+    frame.readRst7("files/crds_vels_box.rst7");
 
     assert(frame.getNatom() == 2101);
     assert(frame.getPositions().size() == 2101);

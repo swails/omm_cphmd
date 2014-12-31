@@ -12,7 +12,7 @@ using namespace std;
 void check_omm_system(void) {
     Amber::AmberParm parm;
 
-    parm.rdparm("trx.prmtop");
+    parm.rdparm("files/trx.prmtop");
 
     OpenMM::System *system = parm.createSystem();
 

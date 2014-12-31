@@ -14,7 +14,7 @@ void check_ncrst_read(void) {
 
     Amber::AmberCoordinateFrame frame;
 
-    frame.readRst7("amber.ncrst");
+    frame.readRst7("files/amber.ncrst");
 
     assert(frame.getNatom() == 2101);
     assert(frame.getPositions().size() == 2101);

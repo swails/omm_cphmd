@@ -176,7 +176,7 @@ void check_bad_add_dihedrals(void) {
 void check_rdparm(void) {
     Amber::AmberParm parm;
 
-    parm.rdparm("trx.prmtop");
+    parm.rdparm("files/trx.prmtop");
 
     // Check atoms and atom properties
 
