@@ -82,6 +82,12 @@ class AmberCoordinateFrame {
         double a_, b_, c_, alpha_, beta_, gama_;
         std::vector<OpenMM::Vec3> coordinates_;
         std::vector<OpenMM::Vec3> velocities_;
+
+        void readASCII_(std::string const& filename);
+        int readNetCDF_(std::string const& filename);
+
+        void writeASCII_(const char* filename);
+        void writeNetCDF_(const char* filename);
 };
 
 }; // namespace Amber

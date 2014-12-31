@@ -3,10 +3,14 @@
   */
 #include <cstdio>
 #include <fstream>
+#include <sstream>
+#include <iostream>
 
 #include "amber_constants.h"
 #include "ambercrd.h"
-//#include "netcdf.h"
+#ifdef HAS_NETCDF
+#include "netcdf.h"
+#endif /* HAS_NETCDF */
 #include "OpenMM.h"
 #include "readparm.h"
 #include "string_manip.h"
@@ -15,7 +19,35 @@ using namespace Amber;
 using namespace std;
 using namespace OpenMM;
 
+#ifdef HAS_NETCDF
+// Some private NetCDF functions, dump it in the Amber namespace
+namespace Amber {
+int GetNCDimension(int ncid, const char* name, size_t *len) {
+    int dimID;
+    if (nc_inq_dimid(ncid, name, &dimID) != NC_NOERR) {
+        stringstream iss;
+        iss << "Could not find dimension ID for " << name;
+        throw AmberCrdError(iss.str().c_str());
+    }
+
+    if (nc_inq_dimlen(ncid, dimID, len) != NC_NOERR) {
+        stringstream iss;
+        iss << "Could not find length of dimension " << name;
+        throw AmberCrdError(iss.str().c_str());
+    }
+
+    return dimID;
+}
+
+};
+#endif /* HAS_NETCDF */
+
 void AmberCoordinateFrame::readRst7(string const& filename) {
+    if (readNetCDF_(filename) != 0)
+        readASCII_(filename);
+}
+
+void AmberCoordinateFrame::readASCII_(string const& filename) {
 
     ifstream input;
     input.open(filename.c_str());
@@ -116,19 +148,217 @@ void AmberCoordinateFrame::readRst7(string const& filename) {
     }
 }
 
+int AmberCoordinateFrame::readNetCDF_(string const& filename) {
+#ifdef HAS_NETCDF
+    int ncid;
+    if (nc_open(filename.c_str(), NC_NOWRITE, &ncid) != NC_NOERR)
+        return 1; // It is not a NetCDF file
+
+    /* If we got here, it is a NetCDF file. Check that it is a restart file by
+     * checking the conventions
+     */
+    size_t attr_len;
+    if (nc_inq_attlen(ncid, NC_GLOBAL, "Conventions", &attr_len) != NC_NOERR)
+        throw AmberCrdError("Problem getting length of Conventions NetCDF attribute");
+
+    char *conventions = new char[attr_len+1];
+    if (nc_get_att_text(ncid, NC_GLOBAL, "Conventions", conventions) != NC_NOERR)
+        throw AmberCrdError("Problem getting Conventions NetCDF attribute");
+    conventions[attr_len] = '\0'; // null-terminate
+
+    if (string("AMBERRESTART") != conventions) {
+        stringstream iss;
+        iss << "NetCDF Conventions (" << conventions << ") is not AMBERRESTART";
+        throw AmberCrdError(iss.str().c_str());
+    }
+
+    if (nc_inq_attlen(ncid, NC_GLOBAL, "ConventionVersion", &attr_len) != NC_NOERR)
+        throw AmberCrdError("Problem getting length of ConventionVersion "
+                            "NetCDF attribute");
+    delete conventions;
+    conventions = new char[attr_len+1];
+    if (nc_get_att_text(ncid, NC_GLOBAL, "ConventionVersion", conventions) != NC_NOERR)
+        throw AmberCrdError("Problem getting ConventionVersion NetCDF attribute");
+    conventions[attr_len] = '\0';
+
+    if (string("1.0") != conventions) {
+        stringstream iss;
+        iss << "NetCDF ConventionVersion (" << conventions << ") is not 1.0";
+        throw AmberCrdError(iss.str().c_str());
+    }
+    delete conventions;
+
+    // OK, I'm satisfied that it's an Amber restart file. Now check for natom
+    int atomDID, spatialDID, angularDID;
+    size_t atom, spatial, angular;
+    bool has_box = true;
+    atomDID = GetNCDimension(ncid, "atom", &atom);
+    try {
+        spatialDID = GetNCDimension(ncid, "cell_spatial", &spatial);
+        angularDID = GetNCDimension(ncid, "cell_angular", &angular);
+        if (spatial != 3 || angular != 3) {
+            cerr << "WARNING: cell_spatial (" << spatial
+                 << ") and cell_angular (" << angular
+                 << ") should both be 3. Ignoring box info." << endl;
+            has_box = false;
+        }
+    } catch (AmberCrdError &e) {
+        has_box = false;
+    }
+    natom_ = (int) atom;
+
+    // Now get the coordinates (and make sure units are correct)
+    int coordVID;
+    if (nc_inq_varid(ncid, "coordinates", &coordVID) != NC_NOERR)
+        throw AmberCrdError("NetCDF restart does not have coordinates");
+    double *coords = new double[3*natom_];
+    size_t start[] = {0, 0};
+    size_t count[] = {natom_, 3};
+    if (nc_get_vara_double(ncid, coordVID, start, count, coords) != NC_NOERR) {
+        delete[] coords;
+        throw AmberCrdError("Trouble getting coordinates from NetCDF restart");
+    }
+    // Make sure the units are set and set to "angstrom"
+    if (nc_inq_attlen(ncid, coordVID, "units", &attr_len) != NC_NOERR) {
+        cerr << "WARNING: coordinates variable does not have units attribute"
+             << endl;
+    } else {
+        char *attr = new char[attr_len+1];
+        if (nc_get_att_text(ncid, coordVID, "units", attr) != NC_NOERR)
+            cerr << "WARNING: trouble getting coordinates units attribute"
+                 << endl;
+        else {
+            attr[attr_len] = '\0';
+            if (string("angstrom") != attr)
+                cerr << "WARNING: coordinates units are " << attr
+                     << ", not angstroms" << endl;
+        }
+        delete attr;
+    }
+    coordinates_.clear();
+    coordinates_.reserve(natom_);
+    for (int i = 0; i < natom_*3; i+=3) {
+        coordinates_.push_back(
+                OpenMM::Vec3(coords[i], coords[i+1], coords[i+2]));
+    }
+
+    // Velocities
+    int velVID;
+    if (nc_inq_varid(ncid, "velocities", &velVID) == NC_NOERR) {
+        // Has velocities
+        if (nc_get_vara_double(ncid, velVID, start, count, coords) != NC_NOERR) {
+            delete[] coords;
+            throw AmberCrdError("Trouble getting velocities from NetCDF restart");
+        }
+        if (nc_inq_attlen(ncid, velVID, "units", &attr_len) != NC_NOERR)
+            cerr << "WARNING: velocities variable does not have units attribute"
+                 << endl;
+        else {
+            char *attr = new char[attr_len+1];
+            if (nc_get_att_text(ncid, velVID, "units", attr) != NC_NOERR)
+                cerr << "WARNING: trouble getting velocities units attribute"
+                     << endl;
+            else {
+                attr[attr_len] = '\0';
+                if (string("angstrom/picosecond") != attr)
+                    cerr << "WARNING: velocities units are " << attr
+                         << ", not angstroms/picoseconds" << endl;
+            }
+            delete attr;
+        }
+        // See if we have a scale factor
+        nc_type type;
+        double scale_factor = 1;
+        if (nc_inq_atttype(ncid, velVID, "scale_factor", &type) == NC_NOERR) {
+            if (type != NC_DOUBLE && type != NC_FLOAT) {
+                cerr << "WARNING: velocities scale_factor is not a double"
+                     << endl;
+            } else if (type == NC_DOUBLE) {
+                if (nc_get_att_double(ncid, velVID, "scale_factor",
+                                      &scale_factor) != NC_NOERR) {
+                    cerr << "WARNING: could not get velocity scale_factor"
+                         << endl;
+                }
+            } else if (type == NC_FLOAT) {
+                float sf;
+                if (nc_get_att_float(ncid, velVID, "scale_factor", &sf) != NC_NOERR)
+                    cerr << "WARNING: could not get velocity scale_factor"
+                         << endl;
+                else
+                    scale_factor = (double) sf;
+            }
+        }
+        velocities_.clear();
+        velocities_.reserve(natom_);
+        for (int i = 0; i < natom_*3; i+=3) {
+            velocities_.push_back(
+                    OpenMM::Vec3(coords[i]*scale_factor,
+                                 coords[i+1]*scale_factor,
+                                 coords[i+2]*scale_factor)
+            );
+        }
+    }
+    // END VELOCITIES
+    delete[] coords;
+
+    // Box
+    if (has_box) {
+        int abcVID, angleVID;
+        if (nc_inq_varid(ncid, "cell_lengths", &abcVID) != NC_NOERR) {
+            cerr << "WARNING: Could not find expected cell_lengths variable"
+                 << endl;
+            return 0;
+        }
+
+        if (nc_inq_varid(ncid, "cell_angles", &angleVID) != NC_NOERR) {
+            cerr << "WARNING: Could not find expected cell_angles variable"
+                 << endl;
+            return 0;
+        }
+
+        size_t start[] = {0};
+        size_t count[] = {3};
+        double box[3];
+        if (nc_get_vara_double(ncid, abcVID, start, count, box) != NC_NOERR) {
+            cerr << "WARNING: Could not get cell_lengths from NetCDF file"
+                 << endl;
+            return 0;
+        }
+        a_ = box[0]; b_ = box[1]; c_ = box[2];
+
+        if (nc_get_vara_double(ncid, angleVID, start, count, box) != NC_NOERR) {
+            cerr << "WARNING: Could not get cell_angles from NetCDF file"
+                 << endl;
+            return 0;
+        }
+        alpha_ = box[0]; beta_ = box[1]; gama_ = box[2];
+
+    }
+    return 0;
+#else /* !HAS_NETCDF */
+    return 1; // no NetCDF
+#endif /* HAS_NETCDF */
+}
+
 void AmberCoordinateFrame::readRst7(const char* filename) {
     readRst7(string(filename));
 }
 
-void AmberCoordinateFrame::writeRst7(std::string const& filename, bool netcdf) {
+void AmberCoordinateFrame::writeRst7(string const& filename, bool netcdf) {
     writeRst7(filename.c_str(), netcdf);
 }
 
 void AmberCoordinateFrame::writeRst7(const char* filename, bool netcdf) {
 
     if (netcdf) {
-        throw AmberCrdError("NetCDF file writing not yet supported.");
+        writeNetCDF_(filename);
+    } else {
+        writeASCII_(filename);
     }
+
+}
+
+void AmberCoordinateFrame::writeASCII_(const char* filename) {
 
     FILE *file = NULL;
 
@@ -166,4 +396,8 @@ void AmberCoordinateFrame::writeRst7(const char* filename, bool netcdf) {
                 a_, b_, c_, alpha_, beta_, gama_);
     }
     fclose(file);
+}
+
+void AmberCoordinateFrame::writeNetCDF_(const char* filename) {
+    throw AmberCrdError("NetCDF file writing not yet supported.");
 }

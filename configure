@@ -13,10 +13,12 @@ parser.add_option('-n', '--no-opt', dest='opt', default=True,
                   action='store_false', help='Disable compiler optimizations.')
 parser.add_option('--no-zlib', action='store_false', default=True, dest='zlib',
                   help='Compile without zlib support')
-parser.add_option('-p', '--program', dest='prog', default='cphstats',
-                  help='The name of the resulting program. Default %default.')
 parser.add_option('--prefix', dest='prefix', default=os.getcwd(),
                   help='Installation destination. Default is current directory')
+parser.add_option('--with-netcdf', dest='netcdf', default=None,
+                  help='Prefix where NetCDF libraries and headers are located')
+parser.add_option('--without-netcdf', dest='disable_netcdf', default=False,
+                  action='store_true', help="Don't install with NetCDF support")
 
 
 opt, arg = parser.parse_args()
@@ -144,9 +146,17 @@ else:
 
 ldflags.extend(['-L%s' % os.getenv('OPENMM_LIB_PATH'), '-lOpenMM'])
 
+if not opt.disable_netcdf:
+    cppflags.append("-DHAS_NETCDF")
+    f90flags.append("-DHAS_NETCDF")
+    if opt.netcdf is not None:
+        ldflags.append('-L%s' % os.path.join(opt.netcdf, 'lib')) # lib64??
+        cppflags.append('-I%s' % os.path.join(opt.netcdf, 'include'))
+    ldflags.append('-lnetcdf')
+
 confighopts = dict(cpp=cpp, f90=f90, ld=ld, ldflags=' '.join(ldflags),
                cppflags=' '.join(cppflags), f90flags=' '.join(f90flags),
-               confline=' '.join(sys.argv), prog=opt.prog, prefix=opt.prefix,
+               confline=' '.join(sys.argv), prefix=opt.prefix,
                makeshared=makeshared, sharedext=sharedext)
 f.write("""# configured with [[ %(confline)s ]]
 # Where to install
