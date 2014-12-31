@@ -399,5 +399,79 @@ void AmberCoordinateFrame::writeASCII_(const char* filename) {
 }
 
 void AmberCoordinateFrame::writeNetCDF_(const char* filename) {
-    throw AmberCrdError("NetCDF file writing not yet supported.");
+#ifdef HAS_NETCDF
+    int ncid;
+    int spatialDID, cell_spatialDID, cell_angularDID, atomDID, labelDID;
+    int timeVID, coordinateVID, velocityVID, cell_anglesVID, cell_lengthVID,
+        spatialVID, cell_angularVID, cell_spatialVID;
+
+    // Create the file
+    if (nc_create(filename, NC_64BIT_OFFSET, &ncid) != NC_NOERR) {
+        stringstream iss;
+        iss << "Could not open " << filename << " for writing";
+        throw AmberCrdError(iss.str().c_str());
+    }
+    // Put into define mode
+    if (nc_redef(ncid) != NC_NOERR)
+        throw AmberCrdError("Could not put NetCDF file into define mode");
+    // Define the dimensions
+    if (nc_def_dim(ncid, "atom", (size_t)natom_, &atomDID) != NC_NOERR) {
+        nc_close(ncid);
+        throw AmberCrdError("Could not define atom dimension");
+    }
+    if (nc_def_dim(ncid, "spatial", 3, &spatialDID) != NC_NOERR) {
+        nc_close(ncid);
+        throw AmberCrdError("Could not define spatial dimension");
+    }
+    if (a_ > 0 && b_ > 0 && c_ > 0 && alpha_ > 0 && beta_ > 0 && gama_ > 0) {
+        if (nc_def_dim(ncid, "cell_spatial", 3, &cell_spatialDID) != NC_NOERR) {
+            nc_close(ncid);
+            throw AmberCrdError("Could not define cell_spatial dimension");
+        }
+        if (nc_def_dim(ncid, "cell_angular", 3, &cell_angularDID) != NC_NOERR) {
+            nc_close(ncid);
+            throw AmberCrdError("Could not define cell_angular dimension");
+        }
+        if (nc_def_dim(ncid, "label", 5, &labelDID) != NC_NOERR) {
+            nc_close(ncid);
+            throw AmberCrdError("Could not define label dimension");
+        }
+    }
+    // Define the variables
+    int dimensionID[NC_MAX_VAR_DIMS];
+    if (nc_def_var(ncid, "time", NC_DOUBLE, 0, dimensionID, &timeVID) != NC_NOERR) {
+        nc_close(ncid);
+        throw AmberCrdError("Could not create the time variable");
+    }
+    dimensionID[0] = atomDID;
+    dimensionID[1] = spatialDID;
+    if (nc_def_var(ncid, "coordinates", NC_DOUBLE, 2, dimensionID,
+                   &coordinateVID) != NC_NOERR) {
+        nc_close(ncid);
+        throw AmberCrdError("Could not create the coordinate variable");
+    }
+    dimensionID[0] = spatialDID;
+    if (nc_def_var(ncid, "spatial", NC_CHAR, 1, dimensionID, &spatialVID) != NC_NOERR) {
+        nc_close(ncid);
+        throw AmberCrdError("Could not create the spatial variable");
+    }
+    if (a_ > 0 && b_ > 0 && c_ > 0 && alpha_ > 0 && beta_ > 0 && gama_ > 0) {
+        dimensionID[0] = cell_angularDID;
+        dimensionID[1] = labelDID;
+        if (nc_def_var(ncid, "cell_angular", NC_CHAR, 2, dimensionID,
+                       &cell_angularVID) != NC_NOERR) {
+            nc_close(ncid);
+            throw AmberCrdError("Could not create the cell_angular variable");
+        }
+        dimensionID[0] = cell_spatialDID;
+        if (nc_def_var(ncid, "cell_spatial", NC_CHAR, 1, dimensionID,
+                       &cell_angularVID) != NC_NOERR) {
+            nc_close(ncid);
+            throw AmberCrdError("Could not create the cell_spatial variable");
+        }
+        dimensionID[0] = cell_spatialDID;
+    }
+#else
+    throw AmberCrdError("libcphmd not built with NetCDF support");
+#endif /* HAS_NETCDF */
 }
