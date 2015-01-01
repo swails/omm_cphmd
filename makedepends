@@ -20,16 +20,19 @@ for f in os.listdir('.'):
                     mydep.append('../include/%s' % d)
         if mydep: dep.write('%s: %s\n' % (f.replace('.cpp', '.o').replace('.F90', '.o'), ' '.join(mydep)))
 
-for f in os.listdir('../include'):
+for f in os.listdir('../include/amber') + ['Amber.h']:
     if f in ignored_headers: continue
     mydep = []
-    f = os.path.join('..', 'include', f)
+    if f == 'Amber.h':
+        f = os.path.join('..', 'include', f)
+    else:
+        f = os.path.join('..', 'include', 'amber', f)
     fd = open(f, 'r')
     for line in fd:
         if incre.match(line):
             d = incre.match(line).groups()[0]
             if not d in mydep and not d in ignored_headers:
-                mydep.append('../include/%s' % d)
+                mydep.append('../include/amber/%s' % d)
     if mydep: dep.write('%s: %s\n' % (f, ' '.join(mydep)))
 
 dep.close()

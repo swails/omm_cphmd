@@ -3,7 +3,7 @@
 #include <cmath>
 #include <iostream>
 
-#include "NetCDFFile.h"
+#include "Amber.h"
 
 using namespace std;
 
@@ -37,7 +37,18 @@ void test_ncrst_read(void) {
     assert(abs((*coords)[2100][1] - 8.62796977) < 1e-5);
     assert(abs((*coords)[2100][2] - -8.56491885) < 1e-5);
 
+    vector<OpenMM::Vec3> *vels = testFile.getVelocities();
+
+    assert(vels->size() == 2101);
+    assert(abs((*vels)[0][0] - -0.14058448*Amber::AMBER_TIME_PER_PS) < 1e-5);
+    assert(abs((*vels)[0][1] - -0.14768776*Amber::AMBER_TIME_PER_PS) < 1e-5);
+    assert(abs((*vels)[0][2] - 0.18278307*Amber::AMBER_TIME_PER_PS) < 1e-5);
+    assert(abs((*vels)[2100][0] - 0.3497022*Amber::AMBER_TIME_PER_PS) < 1e-5);
+    assert(abs((*vels)[2100][1] - 0.39152533*Amber::AMBER_TIME_PER_PS) < 1e-5);
+    assert(abs((*vels)[2100][2] - 0.41794168*Amber::AMBER_TIME_PER_PS) < 1e-5);
+
     delete coords;
+    delete vels;
 }
 
 int main() {

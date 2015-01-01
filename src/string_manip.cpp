@@ -2,9 +2,9 @@
 
 #include <sstream>
 #include <cstring>
-//#include "constants.h"
-#include "exceptions.h"
-#include "string_manip.h"
+
+#include "amber/exceptions.h"
+#include "amber/string_manip.h"
 
 using namespace std;
 using namespace Amber;

@@ -4,7 +4,7 @@
 #include <iostream>
 #include <string>
 
-#include "amberparm.h"
+#include "Amber.h"
 #include "OpenMM.h"
 
 using namespace std;

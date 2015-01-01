@@ -3,7 +3,8 @@
 
 #include <cassert>
 #include <iostream>
-#include "topology.h"
+
+#include "Amber.h"
 
 using namespace std;
 

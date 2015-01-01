@@ -1,7 +1,10 @@
 AmberParmTest.o: AmberParmTest.cpp ../include/amberparm.h ../include/exceptions.h
-CoordinateFileTest.o: CoordinateFileTest.cpp ../include/amber_constants.h ../include/ambercrd.h
-OpenMMTest.o: OpenMMTest.cpp ../include/amberparm.h
-TopologyTest.o: TopologyTest.cpp ../include/topology.h
-../include/ambercrd.h: ../include/exceptions.h
-../include/amberparm.h: ../include/topology.h ../include/readparm.h
-../include/string_manip.h: ../include/exceptions.h
+CoordinateFileTest.o: CoordinateFileTest.cpp ../include/Amber.h
+NetCDFCoordinateFileTest.o: NetCDFCoordinateFileTest.cpp ../include/Amber.h
+NetCDFFileTest.o: NetCDFFileTest.cpp ../include/Amber.h
+OpenMMTest.o: OpenMMTest.cpp ../include/Amber.h
+TopologyTest.o: TopologyTest.cpp ../include/Amber.h
+../include/amber/ambercrd.h: ../include/amber/exceptions.h
+../include/amber/amberparm.h: ../include/amber/topology.h ../include/amber/readparm.h
+../include/amber/string_manip.h: ../include/amber/exceptions.h
+../include/Amber.h: ../include/amber/amber/NetCDFFile.h ../include/amber/amber/amber_constants.h ../include/amber/amber/ambercrd.h ../include/amber/amber/amberparm.h ../include/amber/amber/exceptions.h ../include/amber/amber/readparm.h ../include/amber/amber/string_manip.h ../include/amber/amber/topology.h

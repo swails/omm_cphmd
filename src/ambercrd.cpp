@@ -6,14 +6,16 @@
 #include <sstream>
 #include <iostream>
 
-#include "amber_constants.h"
-#include "ambercrd.h"
+#include "amber/amber_constants.h"
+#include "amber/ambercrd.h"
+#include "amber/readparm.h"
+#include "amber/string_manip.h"
+#include "OpenMM.h"
+
+// TODO: Get rid of this
 #ifdef HAS_NETCDF
 #include "netcdf.h"
 #endif /* HAS_NETCDF */
-#include "OpenMM.h"
-#include "readparm.h"
-#include "string_manip.h"
 
 using namespace Amber;
 using namespace std;

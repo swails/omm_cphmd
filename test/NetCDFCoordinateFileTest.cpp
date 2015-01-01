@@ -5,8 +5,7 @@
 #include <cmath>
 #include <iostream>
 
-#include "ambercrd.h"
-#include "amber_constants.h"
+#include "Amber.h"
 
 using namespace std;
 

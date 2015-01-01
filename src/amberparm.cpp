@@ -2,9 +2,9 @@
  * file and using that to instantiate an OpenMM System
  */
 
-#include "amber_constants.h"
-#include "amberparm.h"
-#include "exceptions.h"
+#include "amber/amber_constants.h"
+#include "amber/amberparm.h"
+#include "amber/exceptions.h"
 
 #include <cmath>
 #include <iostream>

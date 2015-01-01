@@ -5,8 +5,8 @@
 #include <iostream>
 #include <sstream>
 
-#include "NetCDFFile.h"
-#include "exceptions.h"
+#include "amber/NetCDFFile.h"
+#include "amber/exceptions.h"
 
 using namespace std;
 using namespace Amber;
@@ -120,8 +120,12 @@ void AmberNetCDFFile::readFile(const char* filename) {
 }
 
 vector<OpenMM::Vec3> *AmberNetCDFFile::getCoordinates(int frame) const {
+    // Basic error checking
     if (!is_old_)
         throw AmberCrdError("Cannot get coordinates from a new NetCDF file");
+    if (!hasCoordinates())
+        throw AmberCrdError("NetCDF file does not contain coordinates");
+    // Handle restart and trajectory files differently
     if (type_ == RESTART) {
         if (frame != 0) {
             stringstream iss;
@@ -166,9 +170,75 @@ vector<OpenMM::Vec3> *AmberNetCDFFile::getCoordinates(int frame) const {
         vector<OpenMM::Vec3> *ret = new vector<OpenMM::Vec3>;
         ret->reserve(natom_);
         for (int i = 0; i < natom_*3; i+=3) {
-            ret->push_back(OpenMM::Vec3(coords[i], coords[i+1], coords[i+2]));
+            ret->push_back(OpenMM::Vec3((double) coords[i  ],
+                                        (double) coords[i+1],
+                                        (double) coords[i+2]));
         }
         delete[] coords;
+        return ret;
+    } else {
+        throw AmberCrdError("Unrecognized NetCDF file type");
+    }
+    throw AmberCrdError("Should not be here");
+}
+
+vector<OpenMM::Vec3> *AmberNetCDFFile::getVelocities(int frame) const {
+    if (!is_old_)
+        throw AmberCrdError("Cannot get velocities from a new NetCDF file");
+    if (!hasVelocities())
+        throw AmberCrdError("NetCDF file does not contain velocities");
+    if (type_ == RESTART) {
+        if (frame != 0) {
+            stringstream iss;
+            iss << "Frame " << frame << " out of range for NetCDF restart";
+            throw AmberCrdError(iss.str().c_str());
+        }
+        size_t start[] = {0, 0};
+        size_t count[] = {(size_t)natom_, 3};
+        double *vels = new double[3*natom_];
+        if (nc_get_vara_double(ncid_, velocitiesVID_, start, count, vels) != NC_NOERR) {
+            delete[] vels;
+            throw AmberCrdError("Could not get coordinates from NetCDF restart file");
+        }
+        string units = GetAttributeText_(velocitiesVID_, "units");
+        if (units.empty()) {
+            cerr << "WARNING: No units attached to coordinates" << endl;
+        } else if (units != "angstrom/picosecond") {
+            cerr << "WARNING: Coordinate units (" << units << ") not angstroms"
+                 << endl;
+        }
+        double scale = GetAttributeFloat_(velocitiesVID_, "scale_factor", 1.0);
+        vector<OpenMM::Vec3> *ret = new vector<OpenMM::Vec3>;
+        ret->reserve(natom_);
+        for (int i = 0; i < natom_*3; i+=3) {
+            ret->push_back(OpenMM::Vec3(vels[i  ] * scale, vels[i+1] * scale,
+                                        vels[i+2] * scale));
+        }
+        delete[] vels;
+        return ret;
+    } else if (type_ == TRAJECTORY) {
+        if (frame >= num_frames_) {
+            stringstream iss;
+            iss << "Frame " << frame << " is out of range of the total number"
+                << "of frames (" << num_frames_ << ")";
+            throw AmberCrdError(iss.str().c_str());
+        }
+        size_t start[] = {frame, 0, 0};
+        size_t count[] = {1, (size_t)natom_, 3};
+        float *vels = new float[3*natom_];
+        if (nc_get_vara_float(ncid_, velocitiesVID_, start, count, vels) != NC_NOERR) {
+            delete[] vels;
+            throw AmberCrdError("Could not get coordinates from NetCDF trajectory file");
+        }
+        vector<OpenMM::Vec3> *ret = new vector<OpenMM::Vec3>;
+        ret->reserve(natom_);
+        double scale = GetAttributeFloat_(velocitiesVID_, "scale_factor", 1.0);
+        for (int i = 0; i < natom_*3; i+=3) {
+            ret->push_back(OpenMM::Vec3((double) vels[i  ] * scale,
+                                        (double) vels[i+1] * scale,
+                                        (double) vels[i+2] * scale));
+        }
+        delete[] vels;
         return ret;
     } else {
         throw AmberCrdError("Unrecognized NetCDF file type");
@@ -200,7 +270,7 @@ AmberNetCDFFile::GetAttributeText_(int varID, const char* attr, bool required) c
 }
 
 double
-AmberNetCDFFile::GetAttributeFloat_(int varID, const char* attr, double default_) {
+AmberNetCDFFile::GetAttributeFloat_(int varID, const char* attr, double default_) const {
     double ret = default_;
     nc_type type;
     if (nc_inq_atttype(ncid_, varID, attr, &type) == NC_NOERR) {

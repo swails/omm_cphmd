@@ -70,6 +70,16 @@ class AmberNetCDFFile {
          */
         std::vector<OpenMM::Vec3> *getForces(int frame=0) const;
         /**
+         * Returns the 3 cell lengths in Angstroms in a given frame. If cell
+         * lengths are not present, an AmberCrdError is thrown.
+         */
+        OpenMM::Vec3 getCellLengths(int frame=0) const;
+        /**
+         * Returns the 3 cell angles in degrees in a given frame. If cell angles
+         * are not present, an AmberCrdError is thrown.
+         */
+        OpenMM::Vec3 getCellAngles(int frame=0) const;
+        /**
          * Returns the program that created the NetCDF file
          */
         std::string getProgram(void) const {return program_;}
@@ -113,7 +123,7 @@ class AmberNetCDFFile {
          * \return value of the attribute (or default_ if it does not exist)
          */
         double GetAttributeFloat_(int varID, const char* attr,
-                                  double default_=1.0);
+                                  double default_=1.0) const;
         /**
          * Gets the dimension ID for a particular dimension. If the dimension
          * does not exist, a -1 is returned and value is assigned to 0

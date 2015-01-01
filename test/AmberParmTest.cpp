@@ -5,8 +5,8 @@
 #include <cmath>
 #include <iostream>
 
-#include "amberparm.h"
-#include "exceptions.h"
+#include "amber/amberparm.h"
+#include "amber/exceptions.h"
 
 using namespace std;
 

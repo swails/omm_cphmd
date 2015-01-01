@@ -7,7 +7,8 @@
 #include <cstdio>     //< sscanf
 #include <cstring>    //< strncpy
 #include <fstream>
-#include "readparm.h"
+
+#include "amber/readparm.h"
 
 using namespace std;
 using namespace Amber;
