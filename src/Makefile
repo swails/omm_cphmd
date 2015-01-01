@@ -5,10 +5,10 @@ include ../config.h
 OBJS = amberparm.o readparm.o ambercrd.o string_manip.o NetCDFFile.o
 
 install: all
-	/bin/mv libcphmd$(SHARED_EXT) libcphmd.a $(PREFIX)/lib
+	/bin/mv libamber$(SHARED_EXT) libamber.a $(PREFIX)/lib
 
 clean:
-	/bin/rm -f $(OBJS) libcphmd$(SHARED_EXT) libcphmd.a
+	/bin/rm -f $(OBJS) libamber$(SHARED_EXT) libamber.a
 
 all: lib
 
@@ -24,7 +24,7 @@ depends::
 	$(CXX) -I../include $(CXXFLAGS) -c $*.cpp
 
 lib: $(OBJS)
-	$(CXX) $(CXXFLAGS) $(MAKESHARED) $(OBJS) -o libcphmd$(SHARED_EXT) $(LDFLAGS)
-	ar -rcs libcphmd.a $(OBJS)
+	$(CXX) $(CXXFLAGS) $(MAKESHARED) $(OBJS) -o libamber$(SHARED_EXT) $(LDFLAGS)
+	ar -rcs libamber.a $(OBJS)
 
 include depends
