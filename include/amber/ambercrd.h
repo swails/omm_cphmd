@@ -20,36 +20,41 @@ class AmberCoordinateFrame {
 
         AmberCoordinateFrame(void) :
                 natom_(-1), temp0_(0), has_remd_(false), a_(0), b_(0), c_(0),
-                alpha_(0), beta_(0), gama_(0)
-            { }
+                alpha_(0), beta_(0), gama_(0), coordinates_(NULL),
+                velocities_(NULL) {
+            coordinates_ = new std::vector<OpenMM::Vec3>;
+            velocities_ = new std::vector<OpenMM::Vec3>;
+        }
+
+        ~AmberCoordinateFrame(void);
 
         /// Sets the input coordinates (in angstroms)
-        void setPositions(std::vector<OpenMM::Vec3> const &crd) {
+        void setPositions(std::vector<OpenMM::Vec3> *crd) {
             if (natom_ == -1) {
-                natom_ = (int) crd.size();
+                natom_ = (int) crd->size();
                 coordinates_ = crd;
-            } else if (natom_ != crd.size()) {
+            } else if (natom_ != crd->size()) {
                 throw AmberCrdError("coordinate size mismatch");
             } else {
                 coordinates_ = crd;
             }
         }
 
-        std::vector<OpenMM::Vec3> getPositions(void) const {return coordinates_;}
+        std::vector<OpenMM::Vec3>& getPositions(void) const {return *coordinates_;}
 
         /// Sets the input velocities (in angstroms/picosecond)
-        void setVelocities(std::vector<OpenMM::Vec3> const &vel) {
+        void setVelocities(std::vector<OpenMM::Vec3> *vel) {
             if (natom_ == -1) {
-                natom_ = (int) vel.size();
+                natom_ = (int) vel->size();
                 velocities_ = vel;
-            } else if (natom_ != vel.size()) {
+            } else if (natom_ != vel->size()) {
                 throw AmberCrdError("velocity size mismatch");
             } else {
                 velocities_ = vel;
             }
         }
 
-        std::vector<OpenMM::Vec3> getVelocities(void) const {return velocities_;}
+        std::vector<OpenMM::Vec3>& getVelocities(void) const {return *velocities_;}
 
         /// Gets and sets periodic boundary parameters
         void setBox(double a, double b, double c,
@@ -80,8 +85,8 @@ class AmberCoordinateFrame {
         double temp0_; // Temperature or pH
         bool has_remd_;
         double a_, b_, c_, alpha_, beta_, gama_;
-        std::vector<OpenMM::Vec3> coordinates_;
-        std::vector<OpenMM::Vec3> velocities_;
+        std::vector<OpenMM::Vec3> *coordinates_;
+        std::vector<OpenMM::Vec3> *velocities_;
 
         void readASCII_(std::string const& filename);
         int readNetCDF_(std::string const& filename);

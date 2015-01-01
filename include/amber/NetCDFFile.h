@@ -18,7 +18,7 @@ class AmberNetCDFFile {
     public:
         enum FileType {RESTART, TRAJECTORY, AUTOMATIC};
 
-        AmberNetCDFFile(FileType type);
+        AmberNetCDFFile(FileType type=AUTOMATIC);
         ~AmberNetCDFFile();
 
         void readFile(std::string const& filename);

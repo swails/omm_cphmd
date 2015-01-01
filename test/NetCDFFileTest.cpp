@@ -47,6 +47,18 @@ void test_ncrst_read(void) {
     assert(abs((*vels)[2100][1] - 0.39152533*Amber::AMBER_TIME_PER_PS) < 1e-5);
     assert(abs((*vels)[2100][2] - 0.41794168*Amber::AMBER_TIME_PER_PS) < 1e-5);
 
+    OpenMM::Vec3 abc = testFile.getCellLengths();
+
+    assert(abs(abc[0] - 30.2642725) < 1e-6);
+    assert(abs(abc[1] - 30.2642725) < 1e-6);
+    assert(abs(abc[2] - 30.2642725) < 1e-6);
+
+    OpenMM::Vec3 ang = testFile.getCellAngles();
+
+    assert(abs(ang[0] - 109.471219) < 1e-6);
+    assert(abs(ang[1] - 109.471219) < 1e-6);
+    assert(abs(ang[2] - 109.471219) < 1e-6);
+
     delete coords;
     delete vels;
 }

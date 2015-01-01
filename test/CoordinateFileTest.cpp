@@ -93,13 +93,13 @@ void check_inpcrd_crdvelbox_parsing(void) {
 void check_inpcrd_crd_writing(void) {
     Amber::AmberCoordinateFrame frame;
 
-    vector<OpenMM::Vec3> positions;
-    positions.reserve(10);
+    vector<OpenMM::Vec3> *positions = new vector<OpenMM::Vec3>;
+    positions->reserve(10);
 
     for (int i = 0; i < 10; i++)
-        positions.push_back(OpenMM::Vec3((double)i, (double)(i+1), (double)(i+2)));
+        positions->push_back(OpenMM::Vec3((double)i, (double)(i+1), (double)(i+2)));
 
-    frame.setPositions(positions);
+    frame.setPositions(positions); // steals the positions reference
 
     assert(frame.getNatom() == 10);
     assert(frame.getPositions().size() == 10);
@@ -115,21 +115,21 @@ void check_inpcrd_crd_writing(void) {
     assert(frame2.getVelocities().size() == 0);
 
     for (int i = 0; i < 10; i++) {
-        assert(frame2.getPositions()[i] == positions[i]);
+        assert(frame2.getPositions()[i] == (*positions)[i]);
     }
 }
 
 void check_inpcrd_crdvel_writing(void) {
     Amber::AmberCoordinateFrame frame;
 
-    vector<OpenMM::Vec3> positions;
-    vector<OpenMM::Vec3> velocities;
-    positions.reserve(10);
-    velocities.reserve(10);
+    vector<OpenMM::Vec3> *positions = new vector<OpenMM::Vec3>;
+    vector<OpenMM::Vec3> *velocities = new vector<OpenMM::Vec3>;
+    positions->reserve(10);
+    velocities->reserve(10);
 
     for (int i = 0; i < 10; i++) {
-        positions.push_back(OpenMM::Vec3((double)i, (double)(i+1), (double)(i+2)));
-        velocities.push_back(OpenMM::Vec3((double)i*10, (double)(i+1)*10, (double)(i+2)*10));
+        positions->push_back(OpenMM::Vec3((double)i, (double)(i+1), (double)(i+2)));
+        velocities->push_back(OpenMM::Vec3((double)i*10, (double)(i+1)*10, (double)(i+2)*10));
     }
 
     frame.setPositions(positions);
@@ -150,21 +150,21 @@ void check_inpcrd_crdvel_writing(void) {
     assert(frame2.getVelocities().size() == 10);
 
     for (int i = 0; i < 10; i++) {
-        assert(frame2.getPositions()[i] == positions[i]);
-        assert(abs(frame2.getVelocities()[i][0] - velocities[i][0]) < 1e-5);
-        assert(abs(frame2.getVelocities()[i][1] - velocities[i][1]) < 1e-5);
-        assert(abs(frame2.getVelocities()[i][2] - velocities[i][2]) < 1e-5);
+        assert(frame2.getPositions()[i] == (*positions)[i]);
+        assert(abs(frame2.getVelocities()[i][0] - (*velocities)[i][0]) < 1e-5);
+        assert(abs(frame2.getVelocities()[i][1] - (*velocities)[i][1]) < 1e-5);
+        assert(abs(frame2.getVelocities()[i][2] - (*velocities)[i][2]) < 1e-5);
     }
 }
 
 void check_inpcrd_crdbox_writing(void) {
     Amber::AmberCoordinateFrame frame;
 
-    vector<OpenMM::Vec3> positions;
-    positions.reserve(10);
+    vector<OpenMM::Vec3> *positions = new vector<OpenMM::Vec3>;
+    positions->reserve(10);
 
     for (int i = 0; i < 10; i++)
-        positions.push_back(OpenMM::Vec3((double)i, (double)(i+1), (double)(i+2)));
+        positions->push_back(OpenMM::Vec3((double)i, (double)(i+1), (double)(i+2)));
 
     frame.setPositions(positions);
     frame.setBox(10, 10, 10);
@@ -197,21 +197,21 @@ void check_inpcrd_crdbox_writing(void) {
     assert(frame2.getBoxGamma() == 60);
 
     for (int i = 0; i < 10; i++) {
-        assert(frame2.getPositions()[i] == positions[i]);
+        assert(frame2.getPositions()[i] == (*positions)[i]);
     }
 }
 
 void check_inpcrd_crdvelbox_writing(void) {
     Amber::AmberCoordinateFrame frame;
 
-    vector<OpenMM::Vec3> positions;
-    vector<OpenMM::Vec3> velocities;
-    positions.reserve(10);
-    velocities.reserve(10);
+    vector<OpenMM::Vec3> *positions = new vector<OpenMM::Vec3>;
+    vector<OpenMM::Vec3> *velocities = new vector<OpenMM::Vec3>;
+    positions->reserve(10);
+    velocities->reserve(10);
 
     for (int i = 0; i < 10; i++) {
-        positions.push_back(OpenMM::Vec3((double)i, (double)(i+1), (double)(i+2)));
-        velocities.push_back(OpenMM::Vec3((double)i*10, (double)(i+1)*10, (double)(i+2)*10));
+        positions->push_back(OpenMM::Vec3((double)i, (double)(i+1), (double)(i+2)));
+        velocities->push_back(OpenMM::Vec3((double)i*10, (double)(i+1)*10, (double)(i+2)*10));
     }
 
     frame.setPositions(positions);
@@ -246,10 +246,10 @@ void check_inpcrd_crdvelbox_writing(void) {
     assert(frame2.getBoxGamma() == 60);
 
     for (int i = 0; i < 10; i++) {
-        assert(frame2.getPositions()[i] == positions[i]);
-        assert(abs(frame2.getVelocities()[i][0] - velocities[i][0]) < 1e-5);
-        assert(abs(frame2.getVelocities()[i][1] - velocities[i][1]) < 1e-5);
-        assert(abs(frame2.getVelocities()[i][2] - velocities[i][2]) < 1e-5);
+        assert(frame2.getPositions()[i] == (*positions)[i]);
+        assert(abs(frame2.getVelocities()[i][0] - (*velocities)[i][0]) < 1e-5);
+        assert(abs(frame2.getVelocities()[i][1] - (*velocities)[i][1]) < 1e-5);
+        assert(abs(frame2.getVelocities()[i][2] - (*velocities)[i][2]) < 1e-5);
     }
 }
 

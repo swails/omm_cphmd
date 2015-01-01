@@ -33,7 +33,7 @@ void AmberNetCDFFile::readFile(string const& filename) {
     if (nc_open(filename.c_str(), NC_NOWRITE, &ncid_) != NC_NOERR) {
         stringstream iss;
         iss << "Could not open " << filename << " for reading.";
-        throw AmberCrdError(iss.str().c_str());
+        throw NotNetcdf(iss.str().c_str());
     }
     is_open_ = true;
     is_old_ = true;
@@ -246,6 +246,70 @@ vector<OpenMM::Vec3> *AmberNetCDFFile::getVelocities(int frame) const {
     throw AmberCrdError("Should not be here");
 }
 
+OpenMM::Vec3 AmberNetCDFFile::getCellLengths(int frame) const {
+    if (!is_old_)
+        throw AmberCrdError("Cannot get cell lengths from a new NetCDF file");
+    if (cell_lengthsVID_ == -1)
+        throw AmberCrdError("NetCDF file does not contain cell lengths");
+    if (type_ == RESTART) {
+        if (frame != 0)
+            throw AmberCrdError("Restart files only have a single frame");
+        size_t start[] = {0};
+        size_t count[] = {3};
+        double box[3];
+        if (nc_get_vara_double(ncid_, cell_lengthsVID_, start, count, box) != NC_NOERR)
+            throw AmberCrdError("Could not get cell_lengths from NetCDF file");
+        return OpenMM::Vec3(box[0], box[1], box[2]);
+    } else if (type_ == TRAJECTORY) {
+        if (frame >= num_frames_ || frame < 0) {
+            stringstream iss;
+            iss << "Frame " << frame << " out of range; only " << num_frames_
+                << "are present.";
+            throw AmberCrdError(iss.str().c_str());
+        }
+        size_t start[] = {frame, 0};
+        size_t count[] = {1, 3};
+        float box[3];
+        if (nc_get_vara_float(ncid_, cell_lengthsVID_, start, count, box) != NC_NOERR)
+            throw AmberCrdError("Could not get cell_lengths form NetCDF file");
+        return OpenMM::Vec3((double)box[0], (double)box[1], (double)box[2]);
+    } else {
+        throw AmberCrdError("Unrecognized NetCDF file type");
+    }
+}
+
+OpenMM::Vec3 AmberNetCDFFile::getCellAngles(int frame) const {
+    if (!is_old_)
+        throw AmberCrdError("Cannot get cell lengths from a new NetCDF file");
+    if (cell_anglesVID_ == -1)
+        throw AmberCrdError("NetCDF file does not contain cell lengths");
+    if (type_ == RESTART) {
+        if (frame != 0)
+            throw AmberCrdError("Restart files only have a single frame");
+        size_t start[] = {0};
+        size_t count[] = {3};
+        double box[3];
+        if (nc_get_vara_double(ncid_, cell_anglesVID_, start, count, box) != NC_NOERR)
+            throw AmberCrdError("Could not get cell_lengths from NetCDF file");
+        return OpenMM::Vec3(box[0], box[1], box[2]);
+    } else if (type_ == TRAJECTORY) {
+        if (frame >= num_frames_ || frame < 0) {
+            stringstream iss;
+            iss << "Frame " << frame << " out of range; only " << num_frames_
+                << "are present.";
+            throw AmberCrdError(iss.str().c_str());
+        }
+        size_t start[] = {frame, 0};
+        size_t count[] = {1, 3};
+        float box[3];
+        if (nc_get_vara_float(ncid_, cell_anglesVID_, start, count, box) != NC_NOERR)
+            throw AmberCrdError("Could not get cell_lengths form NetCDF file");
+        return OpenMM::Vec3((double)box[0], (double)box[1], (double)box[2]);
+    } else {
+        throw AmberCrdError("Unrecognized NetCDF file type");
+    }
+}
+
 // Private routines
 string
 AmberNetCDFFile::GetAttributeText_(int varID, const char* attr, bool required) const {
@@ -322,6 +386,6 @@ AmberNetCDFFile::AmberNetCDFFile(FileType type) :
         forcesVID_(-1), temp0VID_(-1), remd_dimtypeVID_(-1),
         remd_indicesVID_(-1), is_open_(false), is_old_(false), type_(type),
         num_frames_(0), natom_(0), remd_dimension_(0), label_(0) {}
-    throw AmberCrdError("Compiled without NetCDF support. Cannot use NetCDF functionality");
+    throw NotNetcdf("Compiled without NetCDF support. Cannot use NetCDF functionality");
 }
 #endif /* HAS_NETCDF */
