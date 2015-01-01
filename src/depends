@@ -1,5 +1,6 @@
 ambercrd.o: ambercrd.cpp ../include/amber_constants.h ../include/ambercrd.h ../include/readparm.h ../include/string_manip.h
 amberparm.o: amberparm.cpp ../include/amber_constants.h ../include/amberparm.h ../include/exceptions.h
+NetCDFFile.o: NetCDFFile.cpp ../include/NetCDFFile.h ../include/exceptions.h
 readparm.o: readparm.cpp ../include/readparm.h
 string_manip.o: string_manip.cpp ../include/exceptions.h ../include/string_manip.h
 ../include/ambercrd.h: ../include/exceptions.h

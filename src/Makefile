@@ -2,7 +2,7 @@ include ../config.h
 
 .NOTPARALLEL: clean install all
 
-OBJS = amberparm.o readparm.o ambercrd.o string_manip.o
+OBJS = amberparm.o readparm.o ambercrd.o string_manip.o NetCDFFile.o
 
 install: all
 	/bin/mv libcphmd$(SHARED_EXT) libcphmd.a $(PREFIX)/lib

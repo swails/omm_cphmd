@@ -6,7 +6,7 @@ incre = re.compile(r'# *include *"(.+\.h)"')
 
 dep = open('depends', 'w')
 
-ignored_headers = ('zlib.h', 'OpenMM.h')
+ignored_headers = ('zlib.h', 'OpenMM.h', 'netcdf.h')
 
 for f in os.listdir('.'):
     if f.endswith('.F90') or f.endswith('.cpp'):
