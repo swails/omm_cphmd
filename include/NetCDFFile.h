@@ -58,17 +58,17 @@ class AmberNetCDFFile {
          * Returns the coordinates in a given frame (must be 0 for restart), if
          * coordinates are not present, AmberCrdError is thrown
          */
-        std::vector<OpenMM::Vec3> getCoordinates(int frame=0) const;
+        std::vector<OpenMM::Vec3> *getCoordinates(int frame=0) const;
         /**
          * Returns the velocities in a given frame (must be 0 for restart), if
          * velocities are not present, AmberCrdError is thrown
          */
-        std::vector<OpenMM::Vec3> getVelocities(int frame=0) const;
+        std::vector<OpenMM::Vec3> *getVelocities(int frame=0) const;
         /**
          * Returns the forces in a given frame. If forces are not present, an
          * AmberCrdError is thrown.
          */
-        std::vector<OpenMM::Vec3> getForces(int frame=0) const;
+        std::vector<OpenMM::Vec3> *getForces(int frame=0) const;
         /**
          * Returns the program that created the NetCDF file
          */

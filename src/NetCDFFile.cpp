@@ -119,7 +119,7 @@ void AmberNetCDFFile::readFile(const char* filename) {
     readFile(string(filename));
 }
 
-vector<OpenMM::Vec3> AmberNetCDFFile::getCoordinates(int frame) const {
+vector<OpenMM::Vec3> *AmberNetCDFFile::getCoordinates(int frame) const {
     if (!is_old_)
         throw AmberCrdError("Cannot get coordinates from a new NetCDF file");
     if (type_ == RESTART) {
@@ -142,10 +142,10 @@ vector<OpenMM::Vec3> AmberNetCDFFile::getCoordinates(int frame) const {
             cerr << "WARNING: Coordinate units (" << units << ") not angstroms"
                  << endl;
         }
-        vector<OpenMM::Vec3> ret;
-        ret.reserve(natom_);
+        vector<OpenMM::Vec3> *ret = new vector<OpenMM::Vec3>;
+        ret->reserve(natom_);
         for (int i = 0; i < natom_*3; i+=3) {
-            ret.push_back(OpenMM::Vec3(coords[i], coords[i+1], coords[i+2]));
+            ret->push_back(OpenMM::Vec3(coords[i], coords[i+1], coords[i+2]));
         }
         delete[] coords;
         return ret;
@@ -163,16 +163,17 @@ vector<OpenMM::Vec3> AmberNetCDFFile::getCoordinates(int frame) const {
             delete[] coords;
             throw AmberCrdError("Could not get coordinates from NetCDF trajectory file");
         }
-        vector<OpenMM::Vec3> ret;
-        ret.reserve(natom_);
+        vector<OpenMM::Vec3> *ret = new vector<OpenMM::Vec3>;
+        ret->reserve(natom_);
         for (int i = 0; i < natom_*3; i+=3) {
-            ret.push_back(OpenMM::Vec3(coords[i], coords[i+1], coords[i+2]));
+            ret->push_back(OpenMM::Vec3(coords[i], coords[i+1], coords[i+2]));
         }
         delete[] coords;
         return ret;
     } else {
         throw AmberCrdError("Unrecognized NetCDF file type");
     }
+    throw AmberCrdError("Should not be here");
 }
 
 // Private routines

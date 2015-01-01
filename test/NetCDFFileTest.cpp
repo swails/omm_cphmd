@@ -27,16 +27,17 @@ void test_ncrst_read(void) {
     assert(testFile.getNumFrames() == 1);
     assert(testFile.getNatom() == 2101);
 
-    vector<OpenMM::Vec3> coords = testFile.getCoordinates();
+    vector<OpenMM::Vec3> *coords = testFile.getCoordinates();
 
-    assert(coords.size() == 2101);
-    assert(abs(coords[0][0] - 6.82122493) < 1e-5);
-    assert(abs(coords[0][1] - 6.62762507) < 1e-5);
-    assert(abs(coords[0][2] - -8.51669) < 1e-5);
-    assert(abs(coords[2100][0] - 3.64159598) < 1e-5);
-    assert(abs(coords[2100][1] - 8.62796977) < 1e-5);
-    assert(abs(coords[2100][2] - -8.56491885) < 1e-5);
-            
+    assert(coords->size() == 2101);
+    assert(abs((*coords)[0][0] - 6.82122493) < 1e-5);
+    assert(abs((*coords)[0][1] - 6.62762507) < 1e-5);
+    assert(abs((*coords)[0][2] - -8.51669) < 1e-5);
+    assert(abs((*coords)[2100][0] - 3.64159598) < 1e-5);
+    assert(abs((*coords)[2100][1] - 8.62796977) < 1e-5);
+    assert(abs((*coords)[2100][2] - -8.56491885) < 1e-5);
+
+    delete coords;
 }
 
 int main() {
