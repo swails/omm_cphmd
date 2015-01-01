@@ -168,12 +168,12 @@ void test_nctraj_read(void) {
     delete frc;
 
     // Check some errors
-    ASSERT_RAISES(traj.getCoordinates(5), Amber::AmberCrdError);
-    ASSERT_RAISES(traj.getCoordinates(-1), Amber::AmberCrdError);
-    ASSERT_RAISES(traj.getVelocities(5), Amber::AmberCrdError);
-    ASSERT_RAISES(traj.getVelocities(-1), Amber::AmberCrdError);
-    ASSERT_RAISES(traj.getForces(5), Amber::AmberCrdError);
-    ASSERT_RAISES(traj.getForces(-1), Amber::AmberCrdError);
+    ASSERT_RAISES(traj.getCoordinates(5), Amber::AmberCrdError)
+    ASSERT_RAISES(traj.getCoordinates(-1), Amber::AmberCrdError)
+    ASSERT_RAISES(traj.getVelocities(5), Amber::AmberCrdError)
+    ASSERT_RAISES(traj.getVelocities(-1), Amber::AmberCrdError)
+    ASSERT_RAISES(traj.getForces(5), Amber::AmberCrdError)
+    ASSERT_RAISES(traj.getForces(-1), Amber::AmberCrdError)
 }
 
 int main() {
