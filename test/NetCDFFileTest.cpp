@@ -5,6 +5,10 @@
 
 #include "Amber.h"
 
+#define ASSERT_RAISES(statement, exctype) \
+    try { statement; assert(false);} \
+    catch (exctype &e) {assert(true);}
+
 using namespace std;
 
 void test_ncrst_read(void) {
@@ -63,9 +67,126 @@ void test_ncrst_read(void) {
     delete vels;
 }
 
+void test_bad_ncrst_read() {
+    {
+        Amber::AmberNetCDFFile file(Amber::AmberNetCDFFile::TRAJECTORY);
+        ASSERT_RAISES(file.readFile("files/amber.ncrst"), Amber::AmberCrdError)
+    }
+    {
+        Amber::AmberNetCDFFile file;
+        file.readFile("files/amber.ncrst");
+        ASSERT_RAISES(file.getCoordinates(1), Amber::AmberCrdError)
+        ASSERT_RAISES(file.getCoordinates(-1), Amber::AmberCrdError)
+        ASSERT_RAISES(file.getVelocities(1), Amber::AmberCrdError)
+        ASSERT_RAISES(file.getVelocities(-1), Amber::AmberCrdError)
+        ASSERT_RAISES(file.getForces(), Amber::AmberCrdError)
+    }
+    {
+        Amber::AmberNetCDFFile file(Amber::AmberNetCDFFile::RESTART);
+        ASSERT_RAISES(file.readFile("files/trx.prmtop"), Amber::NotNetcdf)
+    }
+    {
+        Amber::AmberNetCDFFile file(Amber::AmberNetCDFFile::TRAJECTORY);
+        ASSERT_RAISES(file.readFile("files/amber.ncrst"), Amber::AmberCrdError)
+    }
+}
+
+void test_nctraj_read(void) {
+
+    Amber::AmberNetCDFFile traj(Amber::AmberNetCDFFile::TRAJECTORY);
+
+    traj.readFile("files/crdvelfrc.nc");
+
+    assert(traj.getNatom() == 12288);
+    assert(traj.getNumFrames() == 5);
+    assert(traj.hasCoordinates());
+    assert(traj.hasVelocities());
+    assert(traj.hasForces());
+    assert(traj.hasBox());
+    assert(!traj.hasREMD());
+
+    vector<OpenMM::Vec3> *crd;
+    vector<OpenMM::Vec3> *vel;
+    vector<OpenMM::Vec3> *frc;
+
+    crd = traj.getCoordinates(0);
+    vel = traj.getVelocities(0);
+    frc = traj.getForces(0);
+
+    assert(abs((*crd)[0][0] - 0.70450461) < 1e-5);
+    assert(abs((*crd)[0][1] - 4.95110083) < 1e-5);
+    assert(abs((*crd)[0][2] - 3.75570297) < 1e-5);
+    assert(abs((*crd)[12287][0] - 48.6208725) < 1e-5);
+    assert(abs((*crd)[12287][1] - 45.05132675) < 1e-5);
+    assert(abs((*crd)[12287][2] - 2.33579612) < 1e-5);
+
+    assert(abs((*vel)[0][0] - 0.12262645*Amber::AMBER_TIME_PER_PS) < 1e-5);
+    assert(abs((*vel)[0][1] - -0.09410848*Amber::AMBER_TIME_PER_PS) < 1e-5);
+    assert(abs((*vel)[0][2] - 0.18947887*Amber::AMBER_TIME_PER_PS) < 1e-5);
+    assert(abs((*vel)[12287][0] - 0.63712376*Amber::AMBER_TIME_PER_PS) < 1e-5);
+    assert(abs((*vel)[12287][1] - -0.17904748*Amber::AMBER_TIME_PER_PS) < 1e-5);
+    assert(abs((*vel)[12287][2] - -0.01668696*Amber::AMBER_TIME_PER_PS) < 1e-5);
+
+    assert(abs((*frc)[0][0] - 27.66975403) < 1e-5);
+    assert(abs((*frc)[0][1] - 19.00367165) < 1e-5);
+    assert(abs((*frc)[0][2] - 2.24443197) < 1e-5);
+    assert(abs((*frc)[12287][0] - -4.94580793) < 1e-5);
+    assert(abs((*frc)[12287][1] - -9.5912199) < 1e-5);
+    assert(abs((*frc)[12287][2] - -5.21790218) < 1e-5);
+
+    delete crd;
+    delete vel;
+    delete frc;
+
+    crd = traj.getCoordinates(4);
+    vel = traj.getVelocities(4);
+    frc = traj.getForces(4);
+
+    assert(abs((*crd)[0][0] - 0.71575785) < 1e-5);
+    assert(abs((*crd)[0][1] - 4.94342136) < 1e-5);
+    assert(abs((*crd)[0][2] - 3.77085066) < 1e-5);
+    assert(abs((*crd)[12287][0] - 48.67422104) < 1e-5);
+    assert(abs((*crd)[12287][1] - 45.03504562) < 1e-5);
+    assert(abs((*crd)[12287][2] - 2.34541345) < 1e-5);
+
+    assert(abs((*vel)[0][0] - 0.1462021*Amber::AMBER_TIME_PER_PS) < 1e-5);
+    assert(abs((*vel)[0][1] - -0.09275416*Amber::AMBER_TIME_PER_PS) < 1e-5);
+    assert(abs((*vel)[0][2] - 0.18184757*Amber::AMBER_TIME_PER_PS) < 1e-5);
+    assert(abs((*vel)[12287][0] - 0.65629011*Amber::AMBER_TIME_PER_PS) < 1e-5);
+    assert(abs((*vel)[12287][1] - -0.21025696*Amber::AMBER_TIME_PER_PS) < 1e-5);
+    assert(abs((*vel)[12287][2] - 0.19651674*Amber::AMBER_TIME_PER_PS) < 1e-5);
+
+    assert(abs((*frc)[0][0] - 27.13381577) < 1e-5);
+    assert(abs((*frc)[0][1] - 20.83939171) < 1e-5);
+    assert(abs((*frc)[0][2] - 1.19384193) < 1e-5);
+    assert(abs((*frc)[12287][0] - -4.78174591) < 1e-5);
+    assert(abs((*frc)[12287][1] - -10.30693913) < 1e-5);
+    assert(abs((*frc)[12287][2] - -5.04377699) < 1e-5);
+
+    delete crd;
+    delete vel;
+    delete frc;
+
+    // Check some errors
+    ASSERT_RAISES(traj.getCoordinates(5), Amber::AmberCrdError);
+    ASSERT_RAISES(traj.getCoordinates(-1), Amber::AmberCrdError);
+    ASSERT_RAISES(traj.getVelocities(5), Amber::AmberCrdError);
+    ASSERT_RAISES(traj.getVelocities(-1), Amber::AmberCrdError);
+    ASSERT_RAISES(traj.getForces(5), Amber::AmberCrdError);
+    ASSERT_RAISES(traj.getForces(-1), Amber::AmberCrdError);
+}
+
 int main() {
     cout << "Testing NetCDF reading of NetCDF restart file...";
     test_ncrst_read();
+    cout << " OK." << endl;
+
+    cout << "Testing error checking of NetCDF restart file...";
+    test_bad_ncrst_read();
+    cout << " OK." << endl;
+
+    cout << "Testing NetCDF reading of trajectory with coordinates, forces, and velocities...";
+    test_nctraj_read();
     cout << " OK." << endl;
 
     return 0;
