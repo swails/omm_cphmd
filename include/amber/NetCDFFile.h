@@ -21,6 +21,12 @@ class AmberNetCDFFile {
         AmberNetCDFFile(FileType type=AUTOMATIC);
         ~AmberNetCDFFile();
 
+        /**
+         * Open a NetCDF file for reading. If the file does not exist, or is not
+         * a NetCDF file, a Amber::NotNetcdf exception is thrown
+         *
+         * \param filename Name of the file to open for reading
+         */
         void readFile(std::string const& filename);
         void readFile(const char* filename);
 
