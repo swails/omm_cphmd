@@ -18,6 +18,15 @@ class AmberNetCDFFile {
     public:
         enum FileType {RESTART, TRAJECTORY, AUTOMATIC};
 
+        /**
+         * Sets the file type of the object. It can either be
+         * AmberNetCDFFile::RESTART, AmberNetCDFFile::TRAJECTORY, or
+         * AmberNetCDFFile::AUTOMATIC.
+         *
+         * \param type If AmberNetCDFFile::AUTOMATIC, the file type will be
+         *             determined when AmberNetCDFFile::readFile is called
+         *             (attempting to write will result in a thrown exception)
+         */
         AmberNetCDFFile(FileType type=AUTOMATIC);
         ~AmberNetCDFFile();
 
@@ -63,42 +72,76 @@ class AmberNetCDFFile {
         /**
          * Returns the coordinates in a given frame (must be 0 for restart), if
          * coordinates are not present, AmberCrdError is thrown
+         *
+         * \param frame The frame of the NetCDF file to extract coordinates for
+         *
+         * \return A newly allocated pointer to a std::vector of OpenMM::Vec3.
+         *         The caller is responsible for deallocating the result
          */
         std::vector<OpenMM::Vec3> *getCoordinates(int frame=0) const;
         /**
          * Returns the velocities in a given frame (must be 0 for restart), if
-         * velocities are not present, AmberCrdError is thrown
+         * velocities are not present, AmberCrdError is thrown.
+         *
+         * \param frame The farme of the NetCDF file to extract velocities for
+         *
+         * \return A newly allocated pointer to a std::vector of OpenMM::Vec3.
+         *         The caller is responsible for deallocating the result
          */
         std::vector<OpenMM::Vec3> *getVelocities(int frame=0) const;
         /**
          * Returns the forces in a given frame. If forces are not present, an
          * AmberCrdError is thrown.
+         *
+         * \param frame The farme of the NetCDF file to extract forces for
+         *
+         * \return A newly allocated pointer to a std::vector of OpenMM::Vec3.
+         *         The caller is responsible for deallocating the result
          */
         std::vector<OpenMM::Vec3> *getForces(int frame=0) const;
         /**
          * Returns the 3 cell lengths in Angstroms in a given frame. If cell
          * lengths are not present, an AmberCrdError is thrown.
+         *
+         * \param frame The frame of the NetCDF file to extract the cell lengths
+         *              for
+         *
+         * \return An OpenMM::Vec3 containing the 3 cell lengths in Angstroms
          */
         OpenMM::Vec3 getCellLengths(int frame=0) const;
         /**
          * Returns the 3 cell angles in degrees in a given frame. If cell angles
          * are not present, an AmberCrdError is thrown.
+         *
+         * \param frame The frame of the NetCDF file to extract the cell angles
+         *              for
+         *
+         * \return An OpenMM::Vec3 containing the 3 cell angles in degrees
          */
         OpenMM::Vec3 getCellAngles(int frame=0) const;
         /**
          * Returns the program that created the NetCDF file
+         *
+         * \return string containing the text in the "program" attribute
          */
         std::string getProgram(void) const {return program_;}
         /**
          * Returns the program version that created the NetCDF file
+         *
+         * \return the string containing the text in the "programVersion"
+         *         attribute
          */
         std::string getProgramVersion(void) const {return programVersion_;}
         /**
          * Returns the appplication that created the NetCDF file
+         *
+         * \return the string containing the text in the "application" attribute
          */
         std::string getApplication(void) const {return application_;}
         /**
          * Returns the title of the NetCDF file
+         *
+         * \return the string containing the text in the "title" attribute
          */
         std::string getTitle(void) const {return title_;}
     private:

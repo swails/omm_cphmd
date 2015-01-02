@@ -10,5 +10,8 @@ clean:
 test::
 	cd test && $(MAKE) test
 
+docs::
+	doxygen doxyfile.in
+
 $(PREFIX)/lib:
 	/bin/mkdir $(PREFIX)/lib
