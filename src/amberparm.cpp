@@ -566,8 +566,17 @@ OpenMM::System* AmberParm::createSystem(
             nonb_frc->addException(i, *it, 0.0, 1.0, 0.0);
         }
     }
+    // Set the ewald error tolerance
+    if (nonbondedMethod == OpenMM::NonbondedForce::PME ||
+            nonbondedMethod == OpenMM::NonbondedForce::Ewald)
+        nonb_frc->setEwaldErrorTolerance(ewaldErrorTolerance);
     system->addForce(nonb_frc);
 
+    // See about removing the center of mass motion
+    if (removeCMMotion)
+        system->addForce(new OpenMM::CMMotionRemover());
+
+    // See if any GB models need to be added
     return system;
 }
 
