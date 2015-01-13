@@ -2,7 +2,7 @@ include ../config.h
 
 .NOTPARALLEL: clean install all
 
-OBJS = amberparm.o readparm.o ambercrd.o string_manip.o NetCDFFile.o
+OBJS = amberparm.o readparm.o ambercrd.o string_manip.o NetCDFFile.o gbmodels.o
 
 install: all
 	/bin/mv libamber$(SHARED_EXT) libamber.a $(PREFIX)/lib
