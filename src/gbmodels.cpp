@@ -65,8 +65,6 @@ void _createEnergyTerms(OpenMM::CustomGBForce *force, double solventDielectric,
     }
 }
 
-}; // namespace Amber
-
 OpenMM::CustomGBForce *GB_HCT(AmberParm const& amberParm,
                               double solventDielectric,
                               double soluteDielectric,
@@ -366,3 +364,5 @@ OpenMM::CustomGBForce *GB_GBn2(AmberParm const& amberParm,
     }
     return force;
 }
+
+}; // namespace Amber

@@ -5,9 +5,11 @@
 #include "amber/amber_constants.h"
 #include "amber/amberparm.h"
 #include "amber/exceptions.h"
+#include "amber/gbmodels.h"
 
 #include <cmath>
 #include <iostream>
+#include <sstream>
 
 using namespace std;
 using namespace Amber;
@@ -433,7 +435,8 @@ OpenMM::System* AmberParm::createSystem(
                 double solventDielectric,
                 bool removeCMMotion,
                 double ewaldErrorTolerance,
-                bool flexibleConstraints) {
+                bool flexibleConstraints,
+                bool useSASA) {
 
     OpenMM::System* system = new OpenMM::System();
 
@@ -576,7 +579,46 @@ OpenMM::System* AmberParm::createSystem(
     if (removeCMMotion)
         system->addForce(new OpenMM::CMMotionRemover());
 
-    // See if any GB models need to be added
+    // If no implicit solvent, we can return system now
+    if (implicitSolvent == "None")
+        return system;
+
+    // Otherwise, we need to add the GB force
+    if (implicitSolventKappa <= 0 && implicitSolventSaltConc > 0)
+        implicitSolventKappa = 50.33355 * 0.73 *
+                sqrt(implicitSolventSaltConc/(solventDielectric*temperature));
+
+    OpenMM::CustomGBForce *gb_frc = 0;
+    if (implicitSolvent == "HCT") {
+        gb_frc = GB_HCT(*this, solventDielectric, soluteDielectric, useSASA,
+                        nonbondedCutoff, implicitSolventKappa);
+    } else if (implicitSolvent == "OBC1") {
+        gb_frc = GB_OBC1(*this, solventDielectric, soluteDielectric, useSASA,
+                         nonbondedCutoff, implicitSolventKappa);
+    } else if (implicitSolvent == "OBC2") {
+        gb_frc = GB_OBC2(*this, solventDielectric, soluteDielectric, useSASA,
+                         nonbondedCutoff, implicitSolventKappa);
+    } else if (implicitSolvent == "GBn") {
+        gb_frc = GB_GBn(*this, solventDielectric, soluteDielectric, useSASA,
+                        nonbondedCutoff, implicitSolventKappa);
+    } else if (implicitSolvent == "GBn2") {
+        gb_frc = GB_GBn2(*this, solventDielectric, soluteDielectric, useSASA,
+                         nonbondedCutoff, implicitSolventKappa);
+    } else {
+        stringstream iss;
+        iss << "Should not be here; bad GB model " << implicitSolvent;
+        throw InternalError(iss.str());
+    }
+
+    if (nonbondedMethod == OpenMM::NonbondedForce::NoCutoff)
+        gb_frc->setNonbondedMethod(OpenMM::CustomGBForce::NoCutoff);
+    else if (nonbondedMethod == OpenMM::NonbondedForce::CutoffNonPeriodic)
+        gb_frc->setNonbondedMethod(OpenMM::CustomGBForce::CutoffNonPeriodic);
+    else // all remaining options are periodic cutoff...
+        gb_frc->setNonbondedMethod(OpenMM::CustomGBForce::CutoffPeriodic);
+
+    system->addForce(gb_frc);
+
     return system;
 }
 

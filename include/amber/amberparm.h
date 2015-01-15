@@ -245,10 +245,10 @@ class AmberParm {
          * \param implicitSolvent Name of the GB model to use, if any. Can be
          *                        "None", "HCT", "OBC1", "OBC2", "GBn" or "GBn2"
          * \param implicitSolventKappa kappa in the Debye salt concentration
-         *                             equation (in angstrom^-1)
+         *      equation (in angstrom^-1). This takes precedence over
+         *      implicitSolventSaltConc (below)
          * \param implicitSolventSaltConc Alternative way to specify salt
-         *      concentration (converted internally to kappa). This takes
-         *      precedence and is given in Molar
+         *      concentration (converted internally to kappa). Given in Molar
          * \param temperature Temperature used for converting salt concentration
          *                    to kappa
          * \param soluteDielectric Dielectric constant to use for solute in GB
@@ -257,6 +257,8 @@ class AmberParm {
          * \param ewaldErrorTolerance Ewald error tolerance for PME and Ewald
          * \param flexibleConstraints If true, compute energy of constrained
          *                            bonds. If false, don't.
+         * \param useSASA If true, use the ACE SASA-based non-polar solvation
+         *                free energy model for the SA part of GBSA calculations
          */
         OpenMM::System* createSystem(
             OpenMM::NonbondedForce::NonbondedMethod nonbondedMethod=OpenMM::NonbondedForce::NoCutoff,
@@ -271,7 +273,8 @@ class AmberParm {
             double solventDielectric=78.5,
             bool removeCMMotion=true,
             double ewaldErrorTolerance=0.0005,
-            bool flexibleConstraints=true);
+            bool flexibleConstraints=true,
+            bool useSASA=false);
 
     private:
         int ifbox_;
