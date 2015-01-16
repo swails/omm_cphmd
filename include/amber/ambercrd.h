@@ -135,6 +135,24 @@ class AmberCoordinateFrame {
         void writeRst7(std::string const& filename, bool netcdf = false);
         void writeRst7(const char* filename, bool netcdf = false);
 
+        /**
+         * \brief Converts box lengths and angles into unit cell vectors
+         *
+         * \param a (input) Length of the first vector
+         * \param b (input) Length of the second vector
+         * \param c (input) Length of the third vector
+         * \param alpha (input) Angle between b and c
+         * \param beta (input) Angle between a and c
+         * \param gama (input) Angle between b and c
+         * \param avec (output) The first unit cell vector
+         * \param bvec (output) The second unit cell vector
+         * \param cvec (output) The third unit cell vector
+         */
+        static void boxLengthsAnglesToVectors(
+                    const double a, const double b, const double c,
+                    const double alpha, const double beta, const double gama,
+                    OpenMM::Vec3 &avec, OpenMM::Vec3 &bvec, OpenMM::Vec3 &cvec);
+
     private:
         int natom_;
         double temp0_; // Temperature or pH

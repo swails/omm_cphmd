@@ -354,6 +354,7 @@ OpenMM::CustomGBForce *GB_GBn2(AmberParm const& amberParm,
                 params.push_back(0.387882);
                 break;
             default:
+                // Not optimized
                 params.push_back(0.5);
                 params.push_back(1.0);
                 params.push_back(0.8);

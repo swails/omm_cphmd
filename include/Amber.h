@@ -11,5 +11,6 @@
 #include "amber/readparm.h"
 #include "amber/string_manip.h"
 #include "amber/topology.h"
+#include "amber/unitcell.h"
 
 #endif /* AMBER_H */

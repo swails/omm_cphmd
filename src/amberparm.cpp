@@ -6,6 +6,7 @@
 #include "amber/amberparm.h"
 #include "amber/exceptions.h"
 #include "amber/gbmodels.h"
+#include "amber/unitcell.h"
 
 #include <cmath>
 #include <iostream>

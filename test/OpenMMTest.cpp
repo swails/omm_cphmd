@@ -24,9 +24,16 @@ void check_omm_system(void) {
     delete system;
 }
 
+void check_omm_pme(void) {
+}
+
 int main() {
 
     cout << "Testing OpenMM System creation...";
     check_omm_system();
+    cout << " OK." << endl;
+
+    cout << "Testing OpenMM PME potential energies...";
+    check_omm_pme();
     cout << " OK." << endl;
 }

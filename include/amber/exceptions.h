@@ -33,6 +33,14 @@ class NotNetcdf : public std::runtime_error {
             std::runtime_error(std::string(s)) {}
 };
 
+class UnitCellError : public std::runtime_error {
+    public:
+        UnitCellError(std::string const& s) :
+            std::runtime_error(s) {}
+        UnitCellError(const char* s) :
+            std::runtime_error(std::string(s)) {}
+};
+
 class InvalidInteger : public std::runtime_error {
    public:
       InvalidInteger(std::string const& s) :
