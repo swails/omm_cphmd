@@ -634,6 +634,8 @@ OpenMM::System* AmberParm::createSystem(
     else // all remaining options are periodic cutoff...
         gb_frc->setNonbondedMethod(OpenMM::CustomGBForce::CutoffPeriodic);
 
+    gb_frc->setForceGroup(NONBONDED_FORCE_GROUP);
+
     system->addForce(gb_frc);
 
     return system;

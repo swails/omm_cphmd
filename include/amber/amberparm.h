@@ -22,6 +22,9 @@ namespace Amber {
 
 class AmberParm {
     public:
+        /// Force groups used to define the different forces
+        enum ForceGroup {BOND_FORCE_GROUP=0, ANGLE_FORCE_GROUP,
+                         DIHEDRAL_FORCE_GROUP, NONBONDED_FORCE_GROUP};
         /**
          * Optionally parses an Amber topology file
          *
@@ -296,9 +299,6 @@ class AmberParm {
         std::vector<std::set<int> > exclusion_list_;
         Amber::UnitCell unit_cell_;
 };
-
-enum ForceGroup {BOND_FORCE_GROUP=0, ANGLE_FORCE_GROUP, DIHEDRAL_FORCE_GROUP,
-                 NONBONDED_FORCE_GROUP};
 
 }; // namespace Amber
 
