@@ -248,13 +248,13 @@ void AmberParm::rdparm(string const& filename) {
     int mbona = parmData[pointers][MBONA].i;
     int numbnd = parmData[pointers][NUMBND].i;
 
-    if (parmData.count(bonds) < 1 || parmData[bonds].size() != mbona*3)
+    if (mbona != 0 && (parmData.count(bonds) < 1 || parmData[bonds].size() != mbona*3))
         throw AmberParmError("Bad (or missing) BONDS_WITHOUT_HYDROGEN section");
-    if (parmData.count(bondsh) < 1 || parmData[bondsh].size() != nbonh*3)
+    if (nbonh != 0 && (parmData.count(bondsh) < 1 || parmData[bondsh].size() != nbonh*3))
         throw AmberParmError("Bad (or missing) BONDS_INC_HYDROGEN section");
-    if (parmData.count(bondk) < 1 || parmData[bondk].size() != numbnd)
+    if (numbnd != 0 && (parmData.count(bondk) < 1 || parmData[bondk].size() != numbnd))
         throw AmberParmError("Bad (or missing) BOND_FORCE_CONSTANT section");
-    if (parmData.count(bondeq) < 1 || parmData[bondeq].size() != numbnd)
+    if (numbnd != 0 && (parmData.count(bondeq) < 1 || parmData[bondeq].size() != numbnd))
         throw AmberParmError("Bad (or missing) BOND_EQUIL_VALUE section");
     for (int i = 0; i < nbonh; i++) {
         int i3 = i * 3;
@@ -280,13 +280,13 @@ void AmberParm::rdparm(string const& filename) {
     int mtheta = parmData[pointers][MTHETA].i;
     int numang = parmData[pointers][NUMANG].i;
 
-    if (parmData.count(angles) < 1 || parmData[angles].size() != mtheta*4)
+    if (mtheta != 0 && (parmData.count(angles) < 1 || parmData[angles].size() != mtheta*4))
         throw AmberParmError("Bad (or missing) ANGLES_WITHOUT_HYDROGEN section");
-    if (parmData.count(anglesh) < 1 || parmData[anglesh].size() != ntheth*4)
+    if (ntheth != 0 && (parmData.count(anglesh) < 1 || parmData[anglesh].size() != ntheth*4))
         throw AmberParmError("Bad (or missing) ANGLES_INC_HYDROGEN section");
-    if (parmData.count(anglek) < 1 || parmData[anglek].size() != numang)
+    if (numang != 0 && (parmData.count(anglek) < 1 || parmData[anglek].size() != numang))
         throw AmberParmError("Bad (or missing) ANGLE_FORCE_CONSTANT section");
-    if (parmData.count(angleeq) < 1 || parmData[angleeq].size() != numang)
+    if (numang != 0 && (parmData.count(angleeq) < 1 || parmData[angleeq].size() != numang))
         throw AmberParmError("Bad (or missing) ANGLE_EQUIL_VALUE section");
 
     for (int i = 0; i < ntheth; i++) {
@@ -323,17 +323,17 @@ void AmberParm::rdparm(string const& filename) {
     vector<double> sceefac(nptra, 1.2);
     vector<double> scnbfac(nptra, 2.0);
 
-    if (parmData.count(dihedrals) < 1 || parmData[dihedrals].size() != mphia*5)
+    if (mphia != 0 && (parmData.count(dihedrals) < 1 || parmData[dihedrals].size() != mphia*5))
         throw AmberParmError("Bad (or missing) DIHEDRALS_WITHOUT_HYDROGEN section");
-    if (parmData.count(dihedralsh) < 1 || parmData[dihedralsh].size() != nphih*5)
+    if (nphih != 0 && (parmData.count(dihedralsh) < 1 || parmData[dihedralsh].size() != nphih*5))
         throw AmberParmError("Bad (or missing) DIHEDRALS_INC_HYDROGEN section");
-    if (parmData.count(dihedralk) < 1 || parmData[dihedralk].size() != nptra)
+    if (nptra != 0 && (parmData.count(dihedralk) < 1 || parmData[dihedralk].size() != nptra))
         throw AmberParmError("Bad (or missing) DIHEDRAL_FORCE_CONSTANT section");
-    if (parmData.count(dihedralphase) < 1 || 
-                parmData[dihedralphase].size() != nptra)
+    if (nptra != 0 && (parmData.count(dihedralphase) < 1 || 
+                parmData[dihedralphase].size() != nptra))
         throw AmberParmError("Bad (or missing) DIHEDRAL_PHASE section");
-    if (parmData.count(dihedralperiodicity) < 1 || 
-                parmData[dihedralperiodicity].size() != nptra)
+    if (nptra != 0 && (parmData.count(dihedralperiodicity) < 1 || 
+                parmData[dihedralperiodicity].size() != nptra))
         throw AmberParmError("Bad (or missing) DIHEDRAL_PERIODICITY section");
     if (parmData.count(scee) > 0) {
         for (int i = 0; i < nptra; i++)
@@ -404,6 +404,18 @@ void AmberParm::rdparm(string const& filename) {
             exclusion_list_[i].insert(e);
         }
         exclptr += nexcl;
+    }
+
+    // Now see if we have to set the unit cell
+    if (ifbox_ > 0) {
+        string box = "BOX_DIMENSIONS";
+        double a = parmData[box][1].f,
+               b = parmData[box][2].f,
+               c = parmData[box][3].f,
+               alpha = parmData[box][0].f,
+               beta = parmData[box][0].f,
+               gamma = parmData[box][0].f;
+        unit_cell_.setUnitCell(a, b, c, alpha, beta, gamma);
     }
 }
 

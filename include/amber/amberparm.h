@@ -14,6 +14,7 @@
 
 #include "topology.h"
 #include "readparm.h"
+#include "unitcell.h"
 
 #include "OpenMM.h"
 
@@ -26,7 +27,7 @@ class AmberParm {
          *
          * \param filename Name of the Amber prmtop file to parse, if provided
          */
-        AmberParm(void) : ifbox_(0) {}
+        AmberParm(void) : ifbox_(0), unit_cell_(Amber::UnitCell()) {}
         AmberParm(std::string const& filename);
         AmberParm(const char* filename);
 
@@ -186,6 +187,14 @@ class AmberParm {
         std::vector<std::string> ResidueLabels(void) const {
             return residue_labels_;
         }
+        /// Returns the UnitCell object for this system
+        Amber::UnitCell getUnitCell(void) const {return unit_cell_;}
+        /**
+         * Sets the unit cell for this system
+         *
+         * \param cell The unit cell to set this system to
+         */
+        void setUnitCell(UnitCell const &cell) {unit_cell_ = cell;}
         /**
          * \brief Determines if 2 atoms are excluded
          *
@@ -285,6 +294,7 @@ class AmberParm {
         std::vector<int> residue_pointers_;
         std::vector<std::string> residue_labels_;
         std::vector<std::set<int> > exclusion_list_;
+        Amber::UnitCell unit_cell_;
 };
 
 enum ForceGroup {BOND_FORCE_GROUP=0, ANGLE_FORCE_GROUP, DIHEDRAL_FORCE_GROUP,

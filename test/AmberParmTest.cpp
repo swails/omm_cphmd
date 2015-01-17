@@ -274,43 +274,72 @@ void check_rdparm(void) {
     assert(parm.IfBox() == 0);
 }
 
+void check_rdparm_box(void) {
+
+    Amber::AmberParm parm("files/4096wat.parm7");
+
+    assert(parm.isPeriodic());
+    assert(parm.IfBox() == 1);
+
+    assert(parm.getUnitCell().getLengthA() == 49.6);
+    assert(parm.getUnitCell().getLengthB() == 49.6);
+    assert(parm.getUnitCell().getLengthC() == 49.6);
+
+    assert(parm.getUnitCell().getAlpha() == 90.0);
+    assert(parm.getUnitCell().getBeta() == 90.0);
+    assert(parm.getUnitCell().getGamma() == 90.0);
+
+    assert(parm.getUnitCell().getVectorA() == OpenMM::Vec3(49.6, 0, 0));
+    assert(parm.getUnitCell().getVectorB() == OpenMM::Vec3(0, 49.6, 0));
+    assert(parm.getUnitCell().getVectorC() == OpenMM::Vec3(0, 0, 49.6));
+
+    assert(parm.Atoms().size() == 12288);
+    assert(parm.Bonds().size() == 12288);
+    assert(parm.Angles().size() == 0);    // None in TIPxP water
+    assert(parm.Dihedrals().size() == 0); // None in water
+}
+
 int main() {
 
     cout << "Checking adding atoms to AmberParm...";
     check_add_atoms();
-    cout << " OK" << endl;
+    cout << " OK." << endl;
 
     cout << "Checking error catching in adding atoms to AmberParm...";
     check_bad_add_atoms();
-    cout << " OK" << endl;
+    cout << " OK." << endl;
 
     cout << "Checking adding bonds to AmberParm...";
     check_add_bonds();
-    cout << " OK" << endl;
+    cout << " OK." << endl;
 
     cout << "Checking error catching in adding bonds to AmberParm...";
     check_bad_add_bonds();
-    cout << " OK" << endl;
+    cout << " OK." << endl;
 
     cout << "Checking adding angles to AmberParm...";
     check_add_angles();
-    cout << " OK" << endl;
+    cout << " OK." << endl;
 
     cout << "Checking error catching in adding angles to AmberParm...";
     check_bad_add_angles();
-    cout << " OK" << endl;
+    cout << " OK." << endl;
 
     cout << "Checking adding dihedrals to AmberParm...";
     check_add_dihedrals();
-    cout << " OK" << endl;
+    cout << " OK." << endl;
 
     cout << "Checking error catching in adding dihedrals to AmberParm...";
     check_bad_add_dihedrals();
-    cout << " OK" << endl;
+    cout << " OK." << endl;
 
     cout << "Checking Amber topology file reading...";
     check_rdparm();
-    cout << " OK" << endl;
+    cout << " OK." << endl;
+
+    cout << "Checking Amber topology file reading with box... ";
+    check_rdparm_box();
+    cout << " OK." << endl;
 
     return 0;
 }
