@@ -4,6 +4,7 @@
 
 #include <string>
 #include <sstream>
+#include <iostream>
 
 #include "amber/gbmodels.h"
 #include "amber/exceptions.h"
@@ -82,7 +83,7 @@ OpenMM::CustomGBForce *GB_HCT(AmberParm const& amberParm,
     stringstream iss;
     iss << "step(r+sr2-or1)*0.5*(1/L-1/U+0.25*(r-sr2^2/r)*(1/(U^2)-1/(L^2))+0.5*log(L/U)/r);"
         << "U=r+sr2;"
-        << "L=max(or, D);"
+        << "L=max(or1, D);"
         << "D=abs(r-sr2)";
     force->addComputedValue(string("I"), iss.str(),
                             OpenMM::CustomGBForce::ParticlePairNoExclusions);
