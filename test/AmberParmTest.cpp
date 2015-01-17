@@ -337,7 +337,7 @@ int main() {
     check_rdparm();
     cout << " OK." << endl;
 
-    cout << "Checking Amber topology file reading with box... ";
+    cout << "Checking Amber topology file reading with box...";
     check_rdparm_box();
     cout << " OK." << endl;
 

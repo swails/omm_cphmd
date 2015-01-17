@@ -4,7 +4,8 @@ test:: clean TopologyTest AmberParmTest OpenMMTest CoordinateFileTest \
        NetCDFCoordinateFileTest NetCDFFileTest UnitCellTest
 	./TopologyTest && /bin/rm ./TopologyTest
 	./AmberParmTest && /bin/rm ./AmberParmTest
-	./OpenMMTest && /bin/rm ./OpenMMTest serialized_system.xml
+	./OpenMMTest && /bin/rm ./OpenMMTest
+	$(MAKE) XmlDiff
 	./CoordinateFileTest && /bin/rm ./CoordinateFileTest test.rst7
 	./NetCDFCoordinateFileTest && /bin/rm ./NetCDFCoordinateFileTest
 	./NetCDFFileTest && /bin/rm ./NetCDFFileTest
@@ -18,6 +19,14 @@ AmberParmTest: AmberParmTest.cpp
 
 OpenMMTest: OpenMMTest.cpp
 	$(CXX) $(CXXFLAGS) -I../include -o OpenMMTest OpenMMTest.cpp ../lib/libamber.a $(LDFLAGS)
+
+# Dependencies for this are wrong -- make sure it is run after OpenMMTest
+XmlDiff:
+	@if [ -z `/usr/bin/diff -w serialized_system.xml files/serialized_system.xml` ]; then \
+		echo "XML File comparison... OK" && /bin/rm serialized_system.xml; \
+	else \
+		echo "XML File comparison... FAILED" && false; \
+	fi
 
 CoordinateFileTest: CoordinateFileTest.cpp
 	$(CXX) $(CXXFLAGS) -I../include -o CoordinateFileTest CoordinateFileTest.cpp ../lib/libamber.a $(LDFLAGS)

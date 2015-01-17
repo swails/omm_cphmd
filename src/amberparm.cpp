@@ -587,10 +587,14 @@ OpenMM::System* AmberParm::createSystem(
             nonbondedMethod == OpenMM::NonbondedForce::Ewald)
         nonb_frc->setEwaldErrorTolerance(ewaldErrorTolerance);
     system->addForce(nonb_frc);
-
     // See about removing the center of mass motion
     if (removeCMMotion)
         system->addForce(new OpenMM::CMMotionRemover());
+    // Add a box if necessary
+    if (isPeriodic())
+        system->setDefaultPeriodicBoxVectors(unit_cell_.getVectorA()/10,
+                                             unit_cell_.getVectorB()/10,
+                                             unit_cell_.getVectorC()/10);
 
     // If no implicit solvent, we can return system now
     if (implicitSolvent == "None")
