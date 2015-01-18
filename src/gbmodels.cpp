@@ -89,8 +89,7 @@ OpenMM::CustomGBForce *GB_HCT(AmberParm const& amberParm,
                             OpenMM::CustomGBForce::ParticlePairNoExclusions);
     // clear the stringstream
     iss.str(string());
-    iss << "1/(1/or-tanh(0.8*psi+2.909125*psi^3)/radius);"
-        << "psi=I*or; radius=or+offset; offset=0.009";
+    iss << "1/(1/or-I)";
     force->addComputedValue(string("B"), iss.str(),
                             OpenMM::CustomGBForce::SingleParticle);
     _createEnergyTerms(force, solventDielectric, soluteDielectric, 0.009,
@@ -100,8 +99,9 @@ OpenMM::CustomGBForce *GB_HCT(AmberParm const& amberParm,
             it != amberParm.AtomEnd(); it++) {
         vector<double> params;
         params.push_back(it->getCharge());
-        params.push_back(it->getGBRadius() * 0.1);
-        params.push_back(it->getGBScreen());
+        double rad = it->getGBRadius() * 0.1 - 0.009;
+        params.push_back(rad);
+        params.push_back(rad*it->getGBScreen());
         force->addParticle(params);
     }
     return force;
@@ -141,8 +141,9 @@ OpenMM::CustomGBForce *GB_OBC1(AmberParm const& amberParm,
             it != amberParm.AtomEnd(); it++) {
         vector<double> params;
         params.push_back(it->getCharge());
-        params.push_back(it->getGBRadius() * 0.1);
-        params.push_back(it->getGBScreen());
+        double rad = it->getGBRadius() * 0.1 - 0.009;
+        params.push_back(rad);
+        params.push_back(rad*it->getGBScreen());
         force->addParticle(params);
     }
     return force;
@@ -182,8 +183,9 @@ OpenMM::CustomGBForce *GB_OBC2(AmberParm const& amberParm,
             it != amberParm.AtomEnd(); it++) {
         vector<double> params;
         params.push_back(it->getCharge());
-        params.push_back(it->getGBRadius() * 0.1);
-        params.push_back(it->getGBScreen());
+        double rad = it->getGBRadius() * 0.1 - 0.009;
+        params.push_back(rad);
+        params.push_back(rad*it->getGBScreen());
         force->addParticle(params);
     }
     return force;
@@ -240,26 +242,27 @@ OpenMM::CustomGBForce *GB_GBn(AmberParm const& amberParm,
             it != amberParm.AtomEnd(); it++) {
         vector<double> params;
         params.push_back(it->getCharge());
-        params.push_back(it->getGBRadius() * 0.1);
+        double rad = it->getGBRadius() * 0.1 - 0.009;
+        params.push_back(rad);
         // Screening parameters have been replaced
         switch(it->getElement()) {
             case 1:
-                params.push_back(1.09085413633);
+                params.push_back(rad*1.09085413633);
                 break;
             case 6:
-                params.push_back(0.48435382330);
+                params.push_back(rad*0.48435382330);
                 break;
             case 7:
-                params.push_back(0.700147318409);
+                params.push_back(rad*0.700147318409);
                 break;
             case 8:
-                params.push_back(1.06557401132);
+                params.push_back(rad*1.06557401132);
                 break;
             case 16:
-                params.push_back(0.602256336067);
+                params.push_back(rad*0.602256336067);
                 break;
             default:
-                params.push_back(0.5); // not optimized
+                params.push_back(rad*0.5); // not optimized
                 break;
         }
         force->addParticle(params);
@@ -314,49 +317,50 @@ OpenMM::CustomGBForce *GB_GBn2(AmberParm const& amberParm,
         << "psi=I*or; radius=or+offset; offset=0.0195141";
     force->addComputedValue(string("B"), iss.str(),
                             OpenMM::CustomGBForce::SingleParticle);
-    _createEnergyTerms(force, solventDielectric, soluteDielectric, 0.009,
+    _createEnergyTerms(force, solventDielectric, soluteDielectric, 0.0195141,
                        cutoff, kappa, useSASA);
     // Now we've built our force -- populate it with the particles
     for (AmberParm::atom_iterator it = amberParm.AtomBegin();
             it != amberParm.AtomEnd(); it++) {
         vector<double> params;
         params.push_back(it->getCharge());
-        params.push_back(it->getGBRadius() * 0.1);
+        double rad = it->getGBRadius() * 0.1 - 0.0195141;
+        params.push_back(rad);
         // Screening parameters have been replaced
         switch(it->getElement()) {
             case 1:
-                params.push_back(1.425952); // screen
+                params.push_back(rad*1.425952); // screen
                 params.push_back(0.788440); // alpha
                 params.push_back(0.798699); // beta
                 params.push_back(0.437334); // gamma
                 break;
             case 6:
-                params.push_back(1.058554);
+                params.push_back(rad*1.058554);
                 params.push_back(0.733756);
                 params.push_back(0.506378);
                 params.push_back(0.205844);
                 break;
             case 7:
-                params.push_back(0.733599);
+                params.push_back(rad*0.733599);
                 params.push_back(0.503364);
                 params.push_back(0.316828);
                 params.push_back(0.192915);
                 break;
             case 8:
-                params.push_back(1.061039);
+                params.push_back(rad*1.061039);
                 params.push_back(0.867814);
                 params.push_back(0.876635);
                 params.push_back(0.387882);
                 break;
             case 16:
-                params.push_back(-0.703469);
+                params.push_back(rad*-0.703469);
                 params.push_back(0.867814);
                 params.push_back(0.876635);
                 params.push_back(0.387882);
                 break;
             default:
                 // Not optimized
-                params.push_back(0.5);
+                params.push_back(rad*0.5);
                 params.push_back(1.0);
                 params.push_back(0.8);
                 params.push_back(4.85);

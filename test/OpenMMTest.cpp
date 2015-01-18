@@ -127,7 +127,7 @@ void check_omm_pme(void) {
     assert(abs(1 - e/-39344.3259106) < 2e-4); // relative error...
 }
 
-void check_omm_gb1(void) {
+void check_omm_gb(string const& model, double saltcon, double nonbe) {
     Amber::AmberParm parm;
     Amber::AmberCoordinateFrame frame;
 
@@ -144,9 +144,8 @@ void check_omm_gb1(void) {
     // Create the system, integrator, and context with the Reference platform
     system = parm.createSystem(
             OpenMM::NonbondedForce::NoCutoff, 0.0, string("None"), false,
-            string("HCT"));
+            model, 0.0, saltcon);
     OpenMM::VerletIntegrator integrator(0.002);
-//  cout << "I have " << OpenMM::Platform::getNumPlatforms() << " plats" << endl;
     OpenMM::Context *context = new OpenMM::Context(*system, integrator, 
                 OpenMM::Platform::getPlatformByName(string("CPU")));
 
@@ -174,11 +173,21 @@ void check_omm_gb1(void) {
     s = context->getState(OpenMM::State::Energy, false,
                           1<<Amber::AmberParm::NONBONDED_FORCE_GROUP);
     e = s.getPotentialEnergy() * Amber::CALORIE_PER_JOULE;
-    assert(abs(1 - e/-4383.2214985) < 1e-6); // relative error...
+    assert(abs(1 - e/nonbe) < 1e-7); // relative error...
+}
+
+// So we can pass a const char*
+void check_omm_gb(const char* model, double saltcon, double nonbe) {
+    check_omm_gb(string(model), saltcon, nonbe);
 }
 
 int main() {
 
+    // Load the main plugins
+    OpenMM::Platform::loadPluginsFromDirectory(
+            OpenMM::Platform::getDefaultPluginsDirectory());
+
+    // Run the tests
     cout << "Testing OpenMM System creation and serialization...";
     check_omm_system();
     cout << " OK." << endl;
@@ -192,6 +201,42 @@ int main() {
     cout << " OK." << endl;
 
     cout << "Testing OpenMM GB HCT energy...";
-    check_omm_gb1();
+    check_omm_gb("HCT", 0.0, -4380.6377735);
+    cout << " OK." << endl;
+
+    cout << "Testing OpenMM GB HCT w/ 0.1M salt...";
+    check_omm_gb("HCT", 0.1, -4383.2215249);
+    cout << " OK." << endl;
+
+    cout << "Testing OpenMM GB OBC1 energy...";
+    check_omm_gb("OBC1", 0.0, -4430.6048991);
+    cout << " OK." << endl;
+
+    cout << "Testing OpenMM GB OBC1 w/ 0.1M salt...";
+    check_omm_gb("OBC1", 0.1, -4433.1897402);
+    cout << " OK." << endl;
+
+    cout << "Testing OpenMM GB OBC2 energy...";
+    check_omm_gb("OBC2", 0.0, -4317.4276516);
+    cout << " OK." << endl;
+
+    cout << "Testing OpenMM GB OBC2 w/ 0.1M salt...";
+    check_omm_gb("OBC2", 0.1, -4319.9948287);
+    cout << " OK." << endl;
+
+    cout << "Testing OpenMM GB GBn energy...";
+    check_omm_gb("GBn", 0.0, -4252.4065109);
+    cout << " OK." << endl;
+
+    cout << "Testing OpenMM GB GBn w/ 0.1M salt...";
+    check_omm_gb("GBn", 0.1, -4254.9660314);
+    cout << " OK." << endl;
+
+    cout << "Testing OpenMM GB GBn2 energy...";
+    check_omm_gb("GBn2", 0.0, -4324.7676537);
+    cout << " OK." << endl;
+
+    cout << "Testing OpenMM GB GBn2 w/ 0.1M salt...";
+    check_omm_gb("GBn2", 0.1, -4327.3449966);
     cout << " OK." << endl;
 }

@@ -25,7 +25,7 @@ depends::
 	$(CXX) -I../include $(CXXFLAGS) -c $*.cpp
 
 lib: $(OBJS)
-	$(CXX) $(CXXFLAGS) $(MAKESHARED) $(OBJS) -o libamber$(SHARED_EXT) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(MAKESHARED) $(OBJS) -o libamber$(SHARED_EXT)
 	ar -rcs libamber.a $(OBJS)
 
 include depends
