@@ -636,6 +636,9 @@ OpenMM::System* AmberParm::createSystem(
 
     gb_frc->setForceGroup(NONBONDED_FORCE_GROUP);
 
+    // Since we're using GB, we need to turn off the reaction field dielectric
+    nonb_frc->setReactionFieldDielectric(1.0);
+
     system->addForce(gb_frc);
 
     return system;

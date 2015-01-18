@@ -13,7 +13,7 @@ using namespace std;
 using namespace Amber;
 
 namespace Amber {
-// Some useful 
+// Common terms for all GB models
 void _createEnergyTerms(OpenMM::CustomGBForce *force, double solventDielectric,
                         double soluteDielectric, double offset, double cutoff,
                         double kappa, bool useSASA) {
@@ -40,7 +40,7 @@ void _createEnergyTerms(OpenMM::CustomGBForce *force, double solventDielectric,
             << params.str();
         force->addEnergyTerm(iss.str(), OpenMM::CustomGBForce::SingleParticle);
     }
-    //
+    // Add the pairwise force
     if (cutoff <= 0) {
         stringstream iss;
         iss << "-138.935485*(1/soluteDielectric-";
@@ -59,10 +59,11 @@ void _createEnergyTerms(OpenMM::CustomGBForce *force, double solventDielectric,
             iss << "exp(-kappa*f)";
         else
             iss << "1";
-        iss << "/solventDielectric)*q1*q2*(1/f-" << cutoff / 10
-            << "; f=sqrt(r^2+B1*B2*exp(-r^2/(4*B1*B2)))" << params.str();
+        iss << "/solventDielectric)*q1*q2*(1/f-" << 1.0/cutoff
+            << "); f=sqrt(r^2+B1*B2*exp(-r^2/(4*B1*B2)))" << params.str();
         force->addEnergyTerm(iss.str(),
                              OpenMM::CustomGBForce::ParticlePairNoExclusions);
+        force->setCutoffDistance(cutoff);
     }
 }
 

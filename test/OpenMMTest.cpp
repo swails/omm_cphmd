@@ -70,6 +70,7 @@ void check_gas_energy(void) {
                           1<<Amber::AmberParm::NONBONDED_FORCE_GROUP);
     e = s.getPotentialEnergy() * Amber::CALORIE_PER_JOULE;
     assert(abs(1 - e/-2313.5905426) < 1e-6); // relative error...
+    delete system;
 }
 
 void check_omm_pme(void) {
@@ -125,9 +126,11 @@ void check_omm_pme(void) {
                           1<<Amber::AmberParm::NONBONDED_FORCE_GROUP);
     e = s.getPotentialEnergy() * Amber::CALORIE_PER_JOULE;
     assert(abs(1 - e/-39344.3259106) < 2e-4); // relative error...
+    delete system;
 }
 
-void check_omm_gb(string const& model, double saltcon, double nonbe) {
+void check_omm_gb(string const& model, double cutoff,
+                  double saltcon, double nonbe) {
     Amber::AmberParm parm;
     Amber::AmberCoordinateFrame frame;
 
@@ -142,8 +145,13 @@ void check_omm_gb(string const& model, double saltcon, double nonbe) {
         positions[i] *= Amber::NANOMETER_PER_ANGSTROM;
 
     // Create the system, integrator, and context with the Reference platform
+    OpenMM::NonbondedForce::NonbondedMethod meth;
+    if (cutoff <= 0)
+        meth = OpenMM::NonbondedForce::NoCutoff;
+    else
+        meth = OpenMM::NonbondedForce::CutoffNonPeriodic;
     system = parm.createSystem(
-            OpenMM::NonbondedForce::NoCutoff, 0.0, string("None"), false,
+            meth, cutoff, string("None"), false,
             model, 0.0, saltcon);
     OpenMM::VerletIntegrator integrator(0.002);
     OpenMM::Context *context = new OpenMM::Context(*system, integrator, 
@@ -173,12 +181,14 @@ void check_omm_gb(string const& model, double saltcon, double nonbe) {
     s = context->getState(OpenMM::State::Energy, false,
                           1<<Amber::AmberParm::NONBONDED_FORCE_GROUP);
     e = s.getPotentialEnergy() * Amber::CALORIE_PER_JOULE;
-    assert(abs(1 - e/nonbe) < 1e-7); // relative error...
+    assert(abs(1 - e/nonbe) < 5e-7); // relative error...
+    delete system;
 }
 
 // So we can pass a const char*
-void check_omm_gb(const char* model, double saltcon, double nonbe) {
-    check_omm_gb(string(model), saltcon, nonbe);
+void check_omm_gb(const char* model, double cutoff,
+                  double saltcon, double nonbe) {
+    check_omm_gb(string(model), cutoff, saltcon, nonbe);
 }
 
 int main() {
@@ -201,42 +211,82 @@ int main() {
     cout << " OK." << endl;
 
     cout << "Testing OpenMM GB HCT energy...";
-    check_omm_gb("HCT", 0.0, -4380.6377735);
+    check_omm_gb("HCT", 0.0, 0.0, -4380.6377735);
     cout << " OK." << endl;
 
     cout << "Testing OpenMM GB HCT w/ 0.1M salt...";
-    check_omm_gb("HCT", 0.1, -4383.2215249);
+    check_omm_gb("HCT", 0.0, 0.1, -4383.2215249);
     cout << " OK." << endl;
 
     cout << "Testing OpenMM GB OBC1 energy...";
-    check_omm_gb("OBC1", 0.0, -4430.6048991);
+    check_omm_gb("OBC1", 0.0, 0.0, -4430.6048991);
     cout << " OK." << endl;
 
     cout << "Testing OpenMM GB OBC1 w/ 0.1M salt...";
-    check_omm_gb("OBC1", 0.1, -4433.1897402);
+    check_omm_gb("OBC1", 0.0, 0.1, -4433.1897402);
     cout << " OK." << endl;
 
     cout << "Testing OpenMM GB OBC2 energy...";
-    check_omm_gb("OBC2", 0.0, -4317.4276516);
+    check_omm_gb("OBC2", 0.0, 0.0, -4317.4276516);
     cout << " OK." << endl;
 
     cout << "Testing OpenMM GB OBC2 w/ 0.1M salt...";
-    check_omm_gb("OBC2", 0.1, -4319.9948287);
+    check_omm_gb("OBC2", 0.0, 0.1, -4319.9948287);
     cout << " OK." << endl;
 
     cout << "Testing OpenMM GB GBn energy...";
-    check_omm_gb("GBn", 0.0, -4252.4065109);
+    check_omm_gb("GBn", 0.0, 0.0, -4252.4065109);
     cout << " OK." << endl;
 
     cout << "Testing OpenMM GB GBn w/ 0.1M salt...";
-    check_omm_gb("GBn", 0.1, -4254.9660314);
+    check_omm_gb("GBn", 0.0, 0.1, -4254.9660314);
     cout << " OK." << endl;
 
     cout << "Testing OpenMM GB GBn2 energy...";
-    check_omm_gb("GBn2", 0.0, -4324.7676537);
+    check_omm_gb("GBn2", 0.0, 0.0, -4324.7676537);
     cout << " OK." << endl;
 
     cout << "Testing OpenMM GB GBn2 w/ 0.1M salt...";
-    check_omm_gb("GBn2", 0.1, -4327.3449966);
+    check_omm_gb("GBn2", 0.0, 0.1, -4327.3449966);
+    cout << " OK." << endl;
+
+    cout << "Testing OpenMM GB HCT energy (15A cutoff)...";
+    check_omm_gb("HCT", 15.0, 0.0, -4541.2393356);
+    cout << " OK." << endl;
+
+    cout << "Testing OpenMM GB HCT w/ 0.1M salt (15A cutoff)...";
+    check_omm_gb("HCT", 15.0, 0.1, -4548.0488375);
+    cout << " OK." << endl;
+
+    cout << "Testing OpenMM GB OBC1 energy (15A cutoff)...";
+    check_omm_gb("OBC1", 15.0, 0.0, -4593.9490639);
+    cout << " OK." << endl;
+
+    cout << "Testing OpenMM GB OBC1 w/ 0.1M salt (15A cutoff)...";
+    check_omm_gb("OBC1", 15.0, 0.1, -4600.9552586);
+    cout << " OK." << endl;
+
+    cout << "Testing OpenMM GB OBC2 energy (15A cutoff)...";
+    check_omm_gb("OBC2", 15.0, 0.0, -4481.5135247);
+    cout << " OK." << endl;
+
+    cout << "Testing OpenMM GB OBC2 w/ 0.1M salt (15A cutoff)...";
+    check_omm_gb("OBC2", 15.0, 0.1, -4488.8354190);
+    cout << " OK." << endl;
+
+    cout << "Testing OpenMM GB GBn energy (15A cutoff)...";
+    check_omm_gb("GBn", 15.0, 0.0, -4410.0631502);
+    cout << " OK." << endl;
+
+    cout << "Testing OpenMM GB GBn w/ 0.1M salt (15A cutoff)...";
+    check_omm_gb("GBn", 15.0, 0.1, -4417.7292305);
+    cout << " OK." << endl;
+
+    cout << "Testing OpenMM GB GBn2 energy (15A cutoff)...";
+    check_omm_gb("GBn2", 15.0, 0.0, -4480.8521321);
+    cout << " OK." << endl;
+
+    cout << "Testing OpenMM GB GBn2 w/ 0.1M salt (15A cutoff)...";
+    check_omm_gb("GBn2", 15.0, 0.1, -4488.0561661);
     cout << " OK." << endl;
 }
