@@ -171,19 +171,19 @@ int main(int argc, char** argv) {
 
     cout << "Checking Atom class with list...";
     check_atoms();
-    cout << " OK" << endl;
+    cout << " OK." << endl;
 
     cout << "Checking Bond class with list...";
     check_bonds();
-    cout << " OK" << endl;
+    cout << " OK." << endl;
 
     cout << "Checking Angle class with list...";
     check_angles();
-    cout << " OK" << endl;
+    cout << " OK." << endl;
 
     cout << "Checking Dihedral class with list...";
     check_dihedrals();
-    cout << " OK" << endl;
+    cout << " OK." << endl;
 
     return 0;
 }

@@ -32,7 +32,7 @@ for f in os.listdir('../include/amber') + ['Amber.h']:
         if incre.match(line):
             d = incre.match(line).groups()[0]
             if not d in mydep and not d in ignored_headers:
-                mydep.append('../include/amber/%s' % d)
+                mydep.append('../include/amber/%s' % os.path.split(d)[1])
     if mydep: dep.write('%s: %s\n' % (f, ' '.join(mydep)))
 
 dep.close()

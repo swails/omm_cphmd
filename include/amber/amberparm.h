@@ -14,6 +14,7 @@
 
 #include "topology.h"
 #include "readparm.h"
+#include "unitcell.h"
 
 #include "OpenMM.h"
 
@@ -21,12 +22,15 @@ namespace Amber {
 
 class AmberParm {
     public:
+        /// Force groups used to define the different forces
+        enum ForceGroup {BOND_FORCE_GROUP=0, ANGLE_FORCE_GROUP,
+                         DIHEDRAL_FORCE_GROUP, NONBONDED_FORCE_GROUP};
         /**
          * Optionally parses an Amber topology file
          *
          * \param filename Name of the Amber prmtop file to parse, if provided
          */
-        AmberParm(void) : ifbox_(0) {}
+        AmberParm(void) : ifbox_(0), unit_cell_(Amber::UnitCell()) {}
         AmberParm(std::string const& filename);
         AmberParm(const char* filename);
 
@@ -186,6 +190,14 @@ class AmberParm {
         std::vector<std::string> ResidueLabels(void) const {
             return residue_labels_;
         }
+        /// Returns the UnitCell object for this system
+        Amber::UnitCell getUnitCell(void) const {return unit_cell_;}
+        /**
+         * Sets the unit cell for this system
+         *
+         * \param cell The unit cell to set this system to
+         */
+        void setUnitCell(UnitCell const &cell) {unit_cell_ = cell;}
         /**
          * \brief Determines if 2 atoms are excluded
          *
@@ -245,10 +257,10 @@ class AmberParm {
          * \param implicitSolvent Name of the GB model to use, if any. Can be
          *                        "None", "HCT", "OBC1", "OBC2", "GBn" or "GBn2"
          * \param implicitSolventKappa kappa in the Debye salt concentration
-         *                             equation (in angstrom^-1)
+         *      equation (in angstrom^-1). This takes precedence over
+         *      implicitSolventSaltConc (below)
          * \param implicitSolventSaltConc Alternative way to specify salt
-         *      concentration (converted internally to kappa). This takes
-         *      precedence and is given in Molar
+         *      concentration (converted internally to kappa). Given in Molar
          * \param temperature Temperature used for converting salt concentration
          *                    to kappa
          * \param soluteDielectric Dielectric constant to use for solute in GB
@@ -257,6 +269,8 @@ class AmberParm {
          * \param ewaldErrorTolerance Ewald error tolerance for PME and Ewald
          * \param flexibleConstraints If true, compute energy of constrained
          *                            bonds. If false, don't.
+         * \param useSASA If true, use the ACE SASA-based non-polar solvation
+         *                free energy model for the SA part of GBSA calculations
          */
         OpenMM::System* createSystem(
             OpenMM::NonbondedForce::NonbondedMethod nonbondedMethod=OpenMM::NonbondedForce::NoCutoff,
@@ -271,7 +285,8 @@ class AmberParm {
             double solventDielectric=78.5,
             bool removeCMMotion=true,
             double ewaldErrorTolerance=0.0005,
-            bool flexibleConstraints=true);
+            bool flexibleConstraints=true,
+            bool useSASA=false);
 
     private:
         int ifbox_;
@@ -282,10 +297,8 @@ class AmberParm {
         std::vector<int> residue_pointers_;
         std::vector<std::string> residue_labels_;
         std::vector<std::set<int> > exclusion_list_;
+        Amber::UnitCell unit_cell_;
 };
-
-enum ForceGroup {BOND_FORCE_GROUP=0, ANGLE_FORCE_GROUP, DIHEDRAL_FORCE_GROUP,
-                 NONBONDED_FORCE_GROUP};
 
 }; // namespace Amber
 

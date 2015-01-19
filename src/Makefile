@@ -2,7 +2,8 @@ include ../config.h
 
 .NOTPARALLEL: clean install all
 
-OBJS = amberparm.o readparm.o ambercrd.o string_manip.o NetCDFFile.o
+OBJS = amberparm.o readparm.o ambercrd.o string_manip.o NetCDFFile.o gbmodels.o \
+	   unitcell.o
 
 install: all
 	/bin/mv libamber$(SHARED_EXT) libamber.a $(PREFIX)/lib
@@ -24,7 +25,7 @@ depends::
 	$(CXX) -I../include $(CXXFLAGS) -c $*.cpp
 
 lib: $(OBJS)
-	$(CXX) $(CXXFLAGS) $(MAKESHARED) $(OBJS) -o libamber$(SHARED_EXT) $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(MAKESHARED) $(OBJS) -o libamber$(SHARED_EXT)
 	ar -rcs libamber.a $(OBJS)
 
 include depends

@@ -5,9 +5,12 @@
 #include "amber/amber_constants.h"
 #include "amber/amberparm.h"
 #include "amber/exceptions.h"
+#include "amber/gbmodels.h"
+#include "amber/unitcell.h"
 
 #include <cmath>
 #include <iostream>
+#include <sstream>
 
 using namespace std;
 using namespace Amber;
@@ -245,13 +248,13 @@ void AmberParm::rdparm(string const& filename) {
     int mbona = parmData[pointers][MBONA].i;
     int numbnd = parmData[pointers][NUMBND].i;
 
-    if (parmData.count(bonds) < 1 || parmData[bonds].size() != mbona*3)
+    if (mbona != 0 && (parmData.count(bonds) < 1 || parmData[bonds].size() != mbona*3))
         throw AmberParmError("Bad (or missing) BONDS_WITHOUT_HYDROGEN section");
-    if (parmData.count(bondsh) < 1 || parmData[bondsh].size() != nbonh*3)
+    if (nbonh != 0 && (parmData.count(bondsh) < 1 || parmData[bondsh].size() != nbonh*3))
         throw AmberParmError("Bad (or missing) BONDS_INC_HYDROGEN section");
-    if (parmData.count(bondk) < 1 || parmData[bondk].size() != numbnd)
+    if (numbnd != 0 && (parmData.count(bondk) < 1 || parmData[bondk].size() != numbnd))
         throw AmberParmError("Bad (or missing) BOND_FORCE_CONSTANT section");
-    if (parmData.count(bondeq) < 1 || parmData[bondeq].size() != numbnd)
+    if (numbnd != 0 && (parmData.count(bondeq) < 1 || parmData[bondeq].size() != numbnd))
         throw AmberParmError("Bad (or missing) BOND_EQUIL_VALUE section");
     for (int i = 0; i < nbonh; i++) {
         int i3 = i * 3;
@@ -277,13 +280,13 @@ void AmberParm::rdparm(string const& filename) {
     int mtheta = parmData[pointers][MTHETA].i;
     int numang = parmData[pointers][NUMANG].i;
 
-    if (parmData.count(angles) < 1 || parmData[angles].size() != mtheta*4)
+    if (mtheta != 0 && (parmData.count(angles) < 1 || parmData[angles].size() != mtheta*4))
         throw AmberParmError("Bad (or missing) ANGLES_WITHOUT_HYDROGEN section");
-    if (parmData.count(anglesh) < 1 || parmData[anglesh].size() != ntheth*4)
+    if (ntheth != 0 && (parmData.count(anglesh) < 1 || parmData[anglesh].size() != ntheth*4))
         throw AmberParmError("Bad (or missing) ANGLES_INC_HYDROGEN section");
-    if (parmData.count(anglek) < 1 || parmData[anglek].size() != numang)
+    if (numang != 0 && (parmData.count(anglek) < 1 || parmData[anglek].size() != numang))
         throw AmberParmError("Bad (or missing) ANGLE_FORCE_CONSTANT section");
-    if (parmData.count(angleeq) < 1 || parmData[angleeq].size() != numang)
+    if (numang != 0 && (parmData.count(angleeq) < 1 || parmData[angleeq].size() != numang))
         throw AmberParmError("Bad (or missing) ANGLE_EQUIL_VALUE section");
 
     for (int i = 0; i < ntheth; i++) {
@@ -320,17 +323,17 @@ void AmberParm::rdparm(string const& filename) {
     vector<double> sceefac(nptra, 1.2);
     vector<double> scnbfac(nptra, 2.0);
 
-    if (parmData.count(dihedrals) < 1 || parmData[dihedrals].size() != mphia*5)
+    if (mphia != 0 && (parmData.count(dihedrals) < 1 || parmData[dihedrals].size() != mphia*5))
         throw AmberParmError("Bad (or missing) DIHEDRALS_WITHOUT_HYDROGEN section");
-    if (parmData.count(dihedralsh) < 1 || parmData[dihedralsh].size() != nphih*5)
+    if (nphih != 0 && (parmData.count(dihedralsh) < 1 || parmData[dihedralsh].size() != nphih*5))
         throw AmberParmError("Bad (or missing) DIHEDRALS_INC_HYDROGEN section");
-    if (parmData.count(dihedralk) < 1 || parmData[dihedralk].size() != nptra)
+    if (nptra != 0 && (parmData.count(dihedralk) < 1 || parmData[dihedralk].size() != nptra))
         throw AmberParmError("Bad (or missing) DIHEDRAL_FORCE_CONSTANT section");
-    if (parmData.count(dihedralphase) < 1 || 
-                parmData[dihedralphase].size() != nptra)
+    if (nptra != 0 && (parmData.count(dihedralphase) < 1 || 
+                parmData[dihedralphase].size() != nptra))
         throw AmberParmError("Bad (or missing) DIHEDRAL_PHASE section");
-    if (parmData.count(dihedralperiodicity) < 1 || 
-                parmData[dihedralperiodicity].size() != nptra)
+    if (nptra != 0 && (parmData.count(dihedralperiodicity) < 1 || 
+                parmData[dihedralperiodicity].size() != nptra))
         throw AmberParmError("Bad (or missing) DIHEDRAL_PERIODICITY section");
     if (parmData.count(scee) > 0) {
         for (int i = 0; i < nptra; i++)
@@ -402,6 +405,18 @@ void AmberParm::rdparm(string const& filename) {
         }
         exclptr += nexcl;
     }
+
+    // Now see if we have to set the unit cell
+    if (ifbox_ > 0) {
+        string box = "BOX_DIMENSIONS";
+        double a = parmData[box][1].f,
+               b = parmData[box][2].f,
+               c = parmData[box][3].f,
+               alpha = parmData[box][0].f,
+               beta = parmData[box][0].f,
+               gamma = parmData[box][0].f;
+        unit_cell_.setUnitCell(a, b, c, alpha, beta, gamma);
+    }
 }
 
 void AmberParm::rdparm(const char* filename) {
@@ -433,7 +448,8 @@ OpenMM::System* AmberParm::createSystem(
                 double solventDielectric,
                 bool removeCMMotion,
                 double ewaldErrorTolerance,
-                bool flexibleConstraints) {
+                bool flexibleConstraints,
+                bool useSASA) {
 
     OpenMM::System* system = new OpenMM::System();
 
@@ -571,12 +587,60 @@ OpenMM::System* AmberParm::createSystem(
             nonbondedMethod == OpenMM::NonbondedForce::Ewald)
         nonb_frc->setEwaldErrorTolerance(ewaldErrorTolerance);
     system->addForce(nonb_frc);
-
     // See about removing the center of mass motion
     if (removeCMMotion)
         system->addForce(new OpenMM::CMMotionRemover());
+    // Add a box if necessary
+    if (isPeriodic())
+        system->setDefaultPeriodicBoxVectors(unit_cell_.getVectorA()/10,
+                                             unit_cell_.getVectorB()/10,
+                                             unit_cell_.getVectorC()/10);
 
-    // See if any GB models need to be added
+    // If no implicit solvent, we can return system now
+    if (implicitSolvent == "None")
+        return system;
+
+    // Otherwise, we need to add the GB force
+    if (implicitSolventKappa <= 0 && implicitSolventSaltConc > 0)
+        implicitSolventKappa = 50.33355 * 0.73 *
+                sqrt(implicitSolventSaltConc/(solventDielectric*temperature));
+
+    OpenMM::CustomGBForce *gb_frc = 0;
+    if (implicitSolvent == "HCT") {
+        gb_frc = GB_HCT(*this, solventDielectric, soluteDielectric, useSASA,
+                        nonbondedCutoff, implicitSolventKappa);
+    } else if (implicitSolvent == "OBC1") {
+        gb_frc = GB_OBC1(*this, solventDielectric, soluteDielectric, useSASA,
+                         nonbondedCutoff, implicitSolventKappa);
+    } else if (implicitSolvent == "OBC2") {
+        gb_frc = GB_OBC2(*this, solventDielectric, soluteDielectric, useSASA,
+                         nonbondedCutoff, implicitSolventKappa);
+    } else if (implicitSolvent == "GBn") {
+        gb_frc = GB_GBn(*this, solventDielectric, soluteDielectric, useSASA,
+                        nonbondedCutoff, implicitSolventKappa);
+    } else if (implicitSolvent == "GBn2") {
+        gb_frc = GB_GBn2(*this, solventDielectric, soluteDielectric, useSASA,
+                         nonbondedCutoff, implicitSolventKappa);
+    } else {
+        stringstream iss;
+        iss << "Should not be here; bad GB model " << implicitSolvent;
+        throw InternalError(iss.str());
+    }
+
+    if (nonbondedMethod == OpenMM::NonbondedForce::NoCutoff)
+        gb_frc->setNonbondedMethod(OpenMM::CustomGBForce::NoCutoff);
+    else if (nonbondedMethod == OpenMM::NonbondedForce::CutoffNonPeriodic)
+        gb_frc->setNonbondedMethod(OpenMM::CustomGBForce::CutoffNonPeriodic);
+    else // all remaining options are periodic cutoff...
+        gb_frc->setNonbondedMethod(OpenMM::CustomGBForce::CutoffPeriodic);
+
+    gb_frc->setForceGroup(NONBONDED_FORCE_GROUP);
+
+    // Since we're using GB, we need to turn off the reaction field dielectric
+    nonb_frc->setReactionFieldDielectric(1.0);
+
+    system->addForce(gb_frc);
+
     return system;
 }
 

@@ -6,6 +6,7 @@
 #define EXCEPTIONS_H
 
 #include <stdexcept>
+#include <string>
 
 namespace Amber {
 
@@ -30,6 +31,14 @@ class NotNetcdf : public std::runtime_error {
         NotNetcdf(std::string const& s) :
             std::runtime_error(s) {}
         NotNetcdf(const char* s) :
+            std::runtime_error(std::string(s)) {}
+};
+
+class UnitCellError : public std::runtime_error {
+    public:
+        UnitCellError(std::string const& s) :
+            std::runtime_error(s) {}
+        UnitCellError(const char* s) :
             std::runtime_error(std::string(s)) {}
 };
 
