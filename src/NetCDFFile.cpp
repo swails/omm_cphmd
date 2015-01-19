@@ -656,36 +656,36 @@ void AmberNetCDFFile::setCoordinates(vector<OpenMM::Vec3> const &coordinates) {
     switch (type_) {
         case TRAJECTORY:
             {
-            size_t start[] = {coordinate_frame_, 0, 0};
-            size_t count[] = {1, natom_, 3};
-            float coords[natom3_];
-            for (size_t i = 0; i < natom_; i++) {
-                size_t i3 = i*3;
-                coords[i3  ] = (float) coordinates[i][0];
-                coords[i3+1] = (float) coordinates[i][1];
-                coords[i3+2] = (float) coordinates[i][2];
-            }
-            if (nc_put_vara_float(ncid_, coordinatesVID_,
-                                  start, count, coords) != NC_NOERR)
-                throw AmberCrdError("Problem writing coordinates to NetCDF file");
+                size_t start[] = {coordinate_frame_, 0, 0};
+                size_t count[] = {1, natom_, 3};
+                float coords[natom3_];
+                for (size_t i = 0; i < natom_; i++) {
+                    size_t i3 = i*3;
+                    coords[i3  ] = (float) coordinates[i][0];
+                    coords[i3+1] = (float) coordinates[i][1];
+                    coords[i3+2] = (float) coordinates[i][2];
+                }
+                if (nc_put_vara_float(ncid_, coordinatesVID_,
+                                      start, count, coords) != NC_NOERR)
+                    throw AmberCrdError("Problem writing coordinates to NetCDF file");
             }
             break;
         case RESTART:
-            {
             if (coordinate_frame_ > 0)
                 throw AmberCrdError("Restart files can only have 1 frame!");
-            size_t start[] = {0, 0};
-            size_t count[] = {natom_, 3};
-            double coords[natom3_];
-            for (size_t i = 0; i < natom_; i++) {
-                size_t i3 = i*3;
-                coords[i3  ] = coordinates[i][0];
-                coords[i3+1] = coordinates[i][1];
-                coords[i3+2] = coordinates[i][2];
-            }
-            if (nc_put_vara_double(ncid_, coordinatesVID_,
-                                   start, count, coords) != NC_NOERR)
-                throw AmberCrdError("Problem writing coordinates to NetCDF file");
+            {
+                size_t start[] = {0, 0};
+                size_t count[] = {natom_, 3};
+                double coords[natom3_];
+                for (size_t i = 0; i < natom_; i++) {
+                    size_t i3 = i*3;
+                    coords[i3  ] = coordinates[i][0];
+                    coords[i3+1] = coordinates[i][1];
+                    coords[i3+2] = coordinates[i][2];
+                }
+                if (nc_put_vara_double(ncid_, coordinatesVID_,
+                                       start, count, coords) != NC_NOERR)
+                    throw AmberCrdError("Problem writing coordinates to NetCDF file");
             }
             break;
         default:
@@ -710,36 +710,36 @@ void AmberNetCDFFile::setVelocities(vector<OpenMM::Vec3> const &velocities) {
     switch (type_) {
         case TRAJECTORY:
             {
-            size_t start[] = {velocity_frame_, 0, 0};
-            size_t count[] = {1, natom_, 3};
-            float vels[natom3_];
-            for (size_t i = 0; i < natom_; i++) {
-                size_t i3 = i*3;
-                vels[i3  ] = (float) velocities[i][0];
-                vels[i3+1] = (float) velocities[i][1];
-                vels[i3+2] = (float) velocities[i][2];
-            }
-            if (nc_put_vara_float(ncid_, velocitiesVID_,
-                                  start, count, vels) != NC_NOERR)
-                throw AmberCrdError("Problem writing velocities to NetCDF file");
+                size_t start[] = {velocity_frame_, 0, 0};
+                size_t count[] = {1, natom_, 3};
+                float vels[natom3_];
+                for (size_t i = 0; i < natom_; i++) {
+                    size_t i3 = i*3;
+                    vels[i3  ] = (float) velocities[i][0];
+                    vels[i3+1] = (float) velocities[i][1];
+                    vels[i3+2] = (float) velocities[i][2];
+                }
+                if (nc_put_vara_float(ncid_, velocitiesVID_,
+                                      start, count, vels) != NC_NOERR)
+                    throw AmberCrdError("Problem writing velocities to NetCDF file");
             }
             break;
         case RESTART:
             if (velocity_frame_ > 0)
                 throw AmberCrdError("Restart files can only have 1 frame!");
             {
-            size_t start[] = {0, 0};
-            size_t count[] = {natom_, 3};
-            double vels[natom3_];
-            for (size_t i = 0; i < natom_; i++) {
-                size_t i3 = i*3;
-                vels[i3  ] = velocities[i][0];
-                vels[i3+1] = velocities[i][1];
-                vels[i3+2] = velocities[i][2];
-            }
-            if (nc_put_vara_double(ncid_, velocitiesVID_,
-                                   start, count, vels) != NC_NOERR)
-                throw AmberCrdError("Problem writing velocities to NetCDF file");
+                size_t start[] = {0, 0};
+                size_t count[] = {natom_, 3};
+                double vels[natom3_];
+                for (size_t i = 0; i < natom_; i++) {
+                    size_t i3 = i*3;
+                    vels[i3  ] = velocities[i][0];
+                    vels[i3+1] = velocities[i][1];
+                    vels[i3+2] = velocities[i][2];
+                }
+                if (nc_put_vara_double(ncid_, velocitiesVID_,
+                                       start, count, vels) != NC_NOERR)
+                    throw AmberCrdError("Problem writing velocities to NetCDF file");
             }
             break;
         default:
@@ -764,36 +764,36 @@ void AmberNetCDFFile::setForces(vector<OpenMM::Vec3> const &forces) {
     switch (type_) {
         case TRAJECTORY:
             {
-            size_t start[] = {force_frame_, 0, 0};
-            size_t count[] = {1, natom_, 3};
-            float frcs[natom3_];
-            for (size_t i = 0; i < natom_; i++) {
-                size_t i3 = i*3;
-                frcs[i3  ] = (float) forces[i][0];
-                frcs[i3+1] = (float) forces[i][1];
-                frcs[i3+2] = (float) forces[i][2];
-            }
-            if (nc_put_vara_float(ncid_, forcesVID_,
-                                  start, count, frcs) != NC_NOERR)
-                throw AmberCrdError("Problem writing forces to NetCDF file");
+                size_t start[] = {force_frame_, 0, 0};
+                size_t count[] = {1, natom_, 3};
+                float frcs[natom3_];
+                for (size_t i = 0; i < natom_; i++) {
+                    size_t i3 = i*3;
+                    frcs[i3  ] = (float) forces[i][0];
+                    frcs[i3+1] = (float) forces[i][1];
+                    frcs[i3+2] = (float) forces[i][2];
+                }
+                if (nc_put_vara_float(ncid_, forcesVID_,
+                                      start, count, frcs) != NC_NOERR)
+                    throw AmberCrdError("Problem writing forces to NetCDF file");
             }
             break;
         case RESTART:
             if (force_frame_ > 0)
                 throw AmberCrdError("Restart files can only have 1 frame!");
             {
-            size_t start[] = {0, 0};
-            size_t count[] = {natom_, 3};
-            double frcs[natom3_];
-            for (size_t i = 0; i < natom_; i++) {
-                size_t i3 = i*3;
-                frcs[i3  ] = forces[i][0];
-                frcs[i3+1] = forces[i][1];
-                frcs[i3+2] = forces[i][2];
-            }
-            if (nc_put_vara_double(ncid_, forcesVID_,
-                                   start, count, frcs) != NC_NOERR)
-                throw AmberCrdError("Problem writing forces to NetCDF file");
+                size_t start[] = {0, 0};
+                size_t count[] = {natom_, 3};
+                double frcs[natom3_];
+                for (size_t i = 0; i < natom_; i++) {
+                    size_t i3 = i*3;
+                    frcs[i3  ] = forces[i][0];
+                    frcs[i3+1] = forces[i][1];
+                    frcs[i3+2] = forces[i][2];
+                }
+                if (nc_put_vara_double(ncid_, forcesVID_,
+                                       start, count, frcs) != NC_NOERR)
+                    throw AmberCrdError("Problem writing forces to NetCDF file");
             }
             break;
         default:
