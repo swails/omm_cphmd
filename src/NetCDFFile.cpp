@@ -5,8 +5,10 @@
 #include <iostream>
 #include <sstream>
 
-#include "amber/NetCDFFile.h"
+#include "amber/amber_constants.h"
 #include "amber/exceptions.h"
+#include "amber/NetCDFFile.h"
+#include "amber/version.h"
 
 using namespace std;
 using namespace Amber;
@@ -22,13 +24,19 @@ AmberNetCDFFile::AmberNetCDFFile(AmberNetCDFFile::FileType type) :
         cell_lengthsVID_(-1), cell_anglesVID_(-1), velocitiesVID_(-1),
         forcesVID_(-1), temp0VID_(-1), remd_dimtypeVID_(-1),
         remd_indicesVID_(-1), is_open_(false), is_old_(false), type_(type),
-        num_frames_(0), natom_(0), remd_dimension_(0), label_(0) {}
+        num_frames_(0), natom_(0), natom3_(0), remd_dimension_(0), label_(0),
+        coordinate_frame_(0), velocity_frame_(0), cell_length_frame_(0),
+        cell_angle_frame_(0), force_frame_(0), time_frame_(0), temp0_frame_(0),
+        remd_indices_frame_(0) {}
 
 AmberNetCDFFile::~AmberNetCDFFile(void) {
     if (is_open_) nc_close(ncid_);
 }
 
 void AmberNetCDFFile::readFile(string const& filename) {
+    // This can only be called once (and not with writeFile)
+    if (ncid_ != -1)
+        throw AmberCrdError("AmberNetCDFFile already in use!");
     // Get all of the attributes
     if (nc_open(filename.c_str(), NC_NOWRITE, &ncid_) != NC_NOERR) {
         stringstream iss;
@@ -75,6 +83,7 @@ void AmberNetCDFFile::readFile(string const& filename) {
     title_ = GetAttributeText_(NC_GLOBAL, "title");
     // Now get all of the dimensions
     atomDID_ = GetDimensionID_("atom", natom_);
+    natom3_ = natom_ * 3;
     if (atomDID_ == -1) throw AmberCrdError("Could not get atom dimension");
     if (type_ == TRAJECTORY) {
         frameDID_ = GetDimensionID_("frame", num_frames_);
@@ -121,7 +130,7 @@ void AmberNetCDFFile::readFile(const char* filename) {
 
 vector<OpenMM::Vec3> *AmberNetCDFFile::getCoordinates(int frame) const {
     // Basic error checking
-    if (!is_old_)
+    if (!is_old_ || ncid_ == -1)
         throw AmberCrdError("Cannot get coordinates from a new NetCDF file");
     if (!hasCoordinates())
         throw AmberCrdError("NetCDF file does not contain coordinates");
@@ -134,7 +143,7 @@ vector<OpenMM::Vec3> *AmberNetCDFFile::getCoordinates(int frame) const {
         }
         size_t start[] = {0, 0};
         size_t count[] = {(size_t)natom_, 3};
-        double *coords = new double[3*natom_];
+        double *coords = new double[natom3_];
         if (nc_get_vara_double(ncid_, coordinatesVID_, start, count, coords) != NC_NOERR) {
             delete[] coords;
             throw AmberCrdError("Could not get coordinates from NetCDF restart file");
@@ -148,7 +157,7 @@ vector<OpenMM::Vec3> *AmberNetCDFFile::getCoordinates(int frame) const {
         }
         vector<OpenMM::Vec3> *ret = new vector<OpenMM::Vec3>;
         ret->reserve(natom_);
-        for (int i = 0; i < natom_*3; i+=3) {
+        for (int i = 0; i < natom3_; i+=3) {
             ret->push_back(OpenMM::Vec3(coords[i], coords[i+1], coords[i+2]));
         }
         delete[] coords;
@@ -162,14 +171,14 @@ vector<OpenMM::Vec3> *AmberNetCDFFile::getCoordinates(int frame) const {
         }
         size_t start[] = {frame, 0, 0};
         size_t count[] = {1, (size_t)natom_, 3};
-        float *coords = new float[3*natom_];
+        float *coords = new float[natom3_];
         if (nc_get_vara_float(ncid_, coordinatesVID_, start, count, coords) != NC_NOERR) {
             delete[] coords;
             throw AmberCrdError("Could not get coordinates from NetCDF trajectory file");
         }
         vector<OpenMM::Vec3> *ret = new vector<OpenMM::Vec3>;
         ret->reserve(natom_);
-        for (int i = 0; i < natom_*3; i+=3) {
+        for (int i = 0; i < natom3_; i+=3) {
             ret->push_back(OpenMM::Vec3((double) coords[i  ],
                                         (double) coords[i+1],
                                         (double) coords[i+2]));
@@ -183,7 +192,7 @@ vector<OpenMM::Vec3> *AmberNetCDFFile::getCoordinates(int frame) const {
 }
 
 vector<OpenMM::Vec3> *AmberNetCDFFile::getVelocities(int frame) const {
-    if (!is_old_)
+    if (!is_old_ || ncid_ == -1)
         throw AmberCrdError("Cannot get velocities from a new NetCDF file");
     if (!hasVelocities())
         throw AmberCrdError("NetCDF file does not contain velocities");
@@ -195,7 +204,7 @@ vector<OpenMM::Vec3> *AmberNetCDFFile::getVelocities(int frame) const {
         }
         size_t start[] = {0, 0};
         size_t count[] = {(size_t)natom_, 3};
-        double *vels = new double[3*natom_];
+        double *vels = new double[natom3_];
         if (nc_get_vara_double(ncid_, velocitiesVID_, start, count, vels) != NC_NOERR) {
             delete[] vels;
             throw AmberCrdError("Could not get velocities from NetCDF restart file");
@@ -210,7 +219,7 @@ vector<OpenMM::Vec3> *AmberNetCDFFile::getVelocities(int frame) const {
         double scale = GetAttributeFloat_(velocitiesVID_, "scale_factor", 1.0);
         vector<OpenMM::Vec3> *ret = new vector<OpenMM::Vec3>;
         ret->reserve(natom_);
-        for (int i = 0; i < natom_*3; i+=3) {
+        for (int i = 0; i < natom3_; i+=3) {
             ret->push_back(OpenMM::Vec3(vels[i  ] * scale, vels[i+1] * scale,
                                         vels[i+2] * scale));
         }
@@ -225,7 +234,7 @@ vector<OpenMM::Vec3> *AmberNetCDFFile::getVelocities(int frame) const {
         }
         size_t start[] = {frame, 0, 0};
         size_t count[] = {1, (size_t)natom_, 3};
-        float *vels = new float[3*natom_];
+        float *vels = new float[natom3_];
         if (nc_get_vara_float(ncid_, velocitiesVID_, start, count, vels) != NC_NOERR) {
             delete[] vels;
             throw AmberCrdError("Could not get coordinates from NetCDF trajectory file");
@@ -233,7 +242,7 @@ vector<OpenMM::Vec3> *AmberNetCDFFile::getVelocities(int frame) const {
         vector<OpenMM::Vec3> *ret = new vector<OpenMM::Vec3>;
         ret->reserve(natom_);
         double scale = GetAttributeFloat_(velocitiesVID_, "scale_factor", 1.0);
-        for (int i = 0; i < natom_*3; i+=3) {
+        for (int i = 0; i < natom3_; i+=3) {
             ret->push_back(OpenMM::Vec3((double) vels[i  ] * scale,
                                         (double) vels[i+1] * scale,
                                         (double) vels[i+2] * scale));
@@ -247,7 +256,7 @@ vector<OpenMM::Vec3> *AmberNetCDFFile::getVelocities(int frame) const {
 }
 
 vector<OpenMM::Vec3> *AmberNetCDFFile::getForces(int frame) const {
-    if (!is_old_)
+    if (!is_old_ || ncid_ == -1)
         throw AmberCrdError("Cannot get forces from a new NetCDF file");
     if (!hasForces())
         throw AmberCrdError("NetCDF file does not contain forces");
@@ -259,7 +268,7 @@ vector<OpenMM::Vec3> *AmberNetCDFFile::getForces(int frame) const {
         }
         size_t start[] = {0, 0};
         size_t count[] = {(size_t)natom_, 3};
-        double *frcs = new double[3*natom_];
+        double *frcs = new double[natom3_];
         if (nc_get_vara_double(ncid_, forcesVID_, start, count, frcs) != NC_NOERR) {
             delete[] frcs;
             throw AmberCrdError("Could not get forces from NetCDF restart file");
@@ -274,7 +283,7 @@ vector<OpenMM::Vec3> *AmberNetCDFFile::getForces(int frame) const {
         double scale = GetAttributeFloat_(forcesVID_, "scale_factor", 1.0);
         vector<OpenMM::Vec3> *ret = new vector<OpenMM::Vec3>;
         ret->reserve(natom_);
-        for (int i = 0; i < natom_*3; i+=3) {
+        for (int i = 0; i < natom3_; i+=3) {
             ret->push_back(OpenMM::Vec3(frcs[i  ] * scale, frcs[i+1] * scale,
                                         frcs[i+2] * scale));
         }
@@ -289,7 +298,7 @@ vector<OpenMM::Vec3> *AmberNetCDFFile::getForces(int frame) const {
         }
         size_t start[] = {frame, 0, 0};
         size_t count[] = {1, (size_t)natom_, 3};
-        float *frcs = new float[3*natom_];
+        float *frcs = new float[natom3_];
         if (nc_get_vara_float(ncid_, forcesVID_, start, count, frcs) != NC_NOERR) {
             delete[] frcs;
             throw AmberCrdError("Could not get coordinates from NetCDF trajectory file");
@@ -297,7 +306,7 @@ vector<OpenMM::Vec3> *AmberNetCDFFile::getForces(int frame) const {
         vector<OpenMM::Vec3> *ret = new vector<OpenMM::Vec3>;
         ret->reserve(natom_);
         double scale = GetAttributeFloat_(forcesVID_, "scale_factor", 1.0);
-        for (int i = 0; i < natom_*3; i+=3) {
+        for (int i = 0; i < natom3_; i+=3) {
             ret->push_back(OpenMM::Vec3((double) frcs[i  ] * scale,
                                         (double) frcs[i+1] * scale,
                                         (double) frcs[i+2] * scale));
@@ -311,7 +320,7 @@ vector<OpenMM::Vec3> *AmberNetCDFFile::getForces(int frame) const {
 }
 
 OpenMM::Vec3 AmberNetCDFFile::getCellLengths(int frame) const {
-    if (!is_old_)
+    if (!is_old_ || ncid_ == -1)
         throw AmberCrdError("Cannot get cell lengths from a new NetCDF file");
     if (cell_lengthsVID_ == -1)
         throw AmberCrdError("NetCDF file does not contain cell lengths");
@@ -343,8 +352,8 @@ OpenMM::Vec3 AmberNetCDFFile::getCellLengths(int frame) const {
 }
 
 OpenMM::Vec3 AmberNetCDFFile::getCellAngles(int frame) const {
-    if (!is_old_)
-        throw AmberCrdError("Cannot get cell lengths from a new NetCDF file");
+    if (!is_old_ || ncid_ == -1)
+        throw AmberCrdError("Cannot get cell lengths from a new/nonexistent NetCDF file");
     if (cell_anglesVID_ == -1)
         throw AmberCrdError("NetCDF file does not contain cell lengths");
     if (type_ == RESTART) {
@@ -372,6 +381,433 @@ OpenMM::Vec3 AmberNetCDFFile::getCellAngles(int frame) const {
     } else {
         throw AmberCrdError("Unrecognized NetCDF file type");
     }
+}
+
+void AmberNetCDFFile::writeFile(const char* filename, int natom, bool hasCrd,
+                bool hasVel, bool hasFrc, bool hasBox, bool hasRemd,
+                int remdDimension, const char* title, const char* application) {
+    writeFile(string(filename), natom, hasCrd, hasVel, hasFrc, hasBox,
+              hasRemd, remdDimension, string(title), string(application));
+}
+
+void AmberNetCDFFile::writeFile(string const& filename, int natom, bool hasCrd,
+                bool hasVel, bool hasFrc, bool hasRemd, bool hasBox,
+                int remdDimension, string const& title, string const& application) {
+
+    // Check and clean the string input
+    if (filename.empty())
+        throw AmberCrdError("Cannot write to blank file");
+    string myTitle, myApp;
+    if (title.empty()) {
+        stringstream iss;
+        iss << "NetCDF file created by " << AMBER_LIBRARY_NAME
+            << " v." << AMBER_LIBRARY_VERSION;
+        myTitle = iss.str();
+    } else {
+        myTitle = title;
+    }
+    if (application.empty())
+        myApp = AMBER_LIBRARY_NAME;
+    else
+        myApp = application;
+
+    // Error checking
+    if (type_ == RESTART && !hasCrd)
+        throw AmberCrdError("RESTART files MUST have coordinates");
+    if (remdDimension > 0 && !hasRemd)
+        throw AmberCrdError("remdDimension > 0 requires hasRemd");
+
+    int NDIM;
+    nc_type data_type;
+    switch (type_) {
+        case TRAJECTORY:
+            NDIM = 3;
+            data_type = NC_FLOAT;
+            break;
+        case RESTART:
+            NDIM = 2;
+            data_type = NC_DOUBLE;
+            break;
+        case AUTOMATIC:
+            throw AmberCrdError("Cannot write to an AUTOMATIC NetCDF file");
+    }
+
+    if (type_ == AUTOMATIC)
+        throw AmberCrdError("Cannot write to an AUTOMATIC file type");
+
+    // Do not write to a file that is already open for reading
+    if (ncid_ == -1)
+        throw AmberCrdError("AmberNetCDFFile instance already initialized");
+
+    // Create and open the file
+    if (nc_create(filename.c_str(), NC_64BIT_OFFSET, &ncid_) != NC_NOERR) {
+        stringstream iss;
+        iss << "Could not open " << filename << " for writing";
+        throw AmberCrdError(iss.str());
+    }
+    is_open_ = true;
+
+    // Define the global attributes
+
+    string program = string(AMBER_LIBRARY_NAME);
+    string programVersion = string(AMBER_LIBRARY_VERSION);
+    string conventions = "AMBER";
+    if (type_ == RESTART) conventions = "AMBERRESTART";
+    if (nc_put_att_text(ncid_, NC_GLOBAL, "Conventions", conventions.size(),
+                        conventions.c_str()) != NC_NOERR)
+        throw AmberCrdError("Error writing Conventions attribute");
+    if (nc_put_att_text(ncid_, NC_GLOBAL, "ConventionVersion", 3, "1.0") != NC_NOERR)
+        throw AmberCrdError("Error writing ConventionVersion attribute");
+    if (nc_put_att_text(ncid_, NC_GLOBAL, "title",
+                        myTitle.size(), myTitle.c_str()) != NC_NOERR)
+        throw AmberCrdError("Error writing title attribute");
+    if (nc_put_att_text(ncid_, NC_GLOBAL, "program",
+                        program.size(), program.c_str()) != NC_NOERR)
+        throw AmberCrdError("Error writing program attribute");
+    if (nc_put_att_text(ncid_, NC_GLOBAL, "programVersion", programVersion.size(),
+                        programVersion.c_str()) != NC_NOERR)
+        throw AmberCrdError("Error writing programVersion attribute");
+    if (nc_put_att_text(ncid_, NC_GLOBAL, "application",
+                        myApp.size(), myApp.c_str()) != NC_NOERR)
+        throw AmberCrdError("Error writing application attribute");
+
+    // Define dimensions
+
+    natom_ = (size_t) natom;
+    natom3_ = natom_ * 3;
+    num_frames_ = 0;
+
+    if (type_ == TRAJECTORY) {
+        if (nc_def_dim(ncid_, "frame", NC_UNLIMITED, &frameDID_) != NC_NOERR)
+            throw AmberCrdError("Error defining frame dimension");
+    }
+    if (nc_def_dim(ncid_, "atom", natom_, &atomDID_) != NC_NOERR)
+        throw AmberCrdError("Error defining atom dimension");
+    if (nc_def_dim(ncid_, "spatial", 3, &spatialDID_) != NC_NOERR)
+        throw AmberCrdError("Error defining spatial dimension");
+    if (remdDimension > 0) {
+        if (nc_def_dim(ncid_, "remd_dimension", (size_t)remdDimension, &remdDID_) != NC_NOERR)
+            throw AmberCrdError("Error defining REMD dimension");
+    }
+    if (hasBox) {
+        if (nc_def_dim(ncid_, "cell_spatial", 3, &cell_spatialDID_) != NC_NOERR)
+            throw AmberCrdError("Error defining cell_spatial dimension");
+        if (nc_def_dim(ncid_, "cell_angular", 3, &cell_angularDID_) != NC_NOERR)
+            throw AmberCrdError("Error defining cell_angular dimension");
+        if (nc_def_dim(ncid_, "label", 5, &labelDID_) != NC_NOERR)
+            throw AmberCrdError("Error defining label dimension");
+    }
+
+    // Define variables
+
+    int dimensionID[NC_MAX_VAR_DIMS];
+    if (type_ == TRAJECTORY) dimensionID[0] = frameDID_;
+
+    // time variable
+    if (nc_def_var(ncid_, "time", data_type, NDIM-2, dimensionID, &timeVID_) != NC_NOERR)
+        throw AmberCrdError("Error defining the time variable");
+    if (nc_put_att_text(ncid_, timeVID_, "units", 10, "picosecond") != NC_NOERR)
+        throw AmberCrdError("Error defining the time unit attribute");
+
+    // Coordinate, velocity, and force variables
+    if (type_ == RESTART) {
+        dimensionID[0] = atomDID_;
+        dimensionID[1] = spatialDID_;
+    } else if (type_ == TRAJECTORY) {
+        dimensionID[0] = frameDID_;
+        dimensionID[1] = atomDID_;
+        dimensionID[2] = spatialDID_;
+    } else {
+        throw InternalError("Should not be here");
+    }
+    if (hasCrd) {
+        if (nc_def_var(ncid_, "coordinates", data_type, NDIM,
+                       dimensionID, &coordinatesVID_) != NC_NOERR)
+            throw AmberCrdError("Error defining coordinates variable");
+        if (nc_put_att_text(ncid_, coordinatesVID_, "units", 8, "angstrom") != NC_NOERR)
+            throw AmberCrdError("Error defining coordinates units attribute");
+    }
+    if (hasVel) {
+        if (nc_def_var(ncid_, "velocities", data_type, NDIM,
+                       dimensionID, &velocitiesVID_) != NC_NOERR)
+            throw AmberCrdError("Error defining velocities variable");
+        if (nc_put_att_text(ncid_, velocitiesVID_, "units", 19,
+                            "angstrom/picosecond") != NC_NOERR)
+            throw AmberCrdError("Error defining velocities units attribute");
+        double scale_factor = 1;
+        if (nc_put_att_double(ncid_, velocitiesVID_, "scale_factor", NC_DOUBLE,
+                              1, &scale_factor) != NC_NOERR)
+            throw AmberCrdError("Error defining velocities scale_factor");
+    }
+    if (hasFrc) {
+        if (nc_def_var(ncid_, "forces", data_type, NDIM,
+                       dimensionID, &forcesVID_) != NC_NOERR)
+            throw AmberCrdError("Error defining forces variable");
+        if (nc_put_att_text(ncid_, forcesVID_, "units", 25,
+                            "kilocalorie/mole/angstrom") != NC_NOERR)
+            throw AmberCrdError("Error defining forces units attribute");
+    }
+
+    // spatial variable
+    if (nc_def_var(ncid_, "spatial", NC_CHAR, 1, dimensionID, &spatialVID_) != NC_NOERR)
+        throw AmberCrdError("Error defining spatial variable");
+
+    // Unit cell-related variable
+    if (hasBox) {
+        // Labels
+        dimensionID[0] = cell_spatialDID_;
+        if (nc_def_var(ncid_, "cell_spatial", NC_CHAR, 1,
+                       dimensionID, &cell_spatialVID_) != NC_NOERR)
+            throw AmberCrdError("Error defining cell_spatial variable");
+        dimensionID[0] = cell_angularDID_;
+        dimensionID[1] = labelDID_;
+        if (nc_def_var(ncid_, "cell_angular", NC_CHAR, 2, dimensionID,
+                       &cell_angularVID_) != NC_NOERR)
+            throw AmberCrdError("Error defining the cell_angular variable");
+
+        // Cell dimensions
+        size_t boxDim;
+        if (type_ == RESTART) {
+            boxDim = 0;
+        } else if (type_ == TRAJECTORY) {
+            dimensionID[0] = frameDID_;
+            boxDim = 1;
+        } else {
+            throw InternalError("Should not be here");
+        }
+        dimensionID[boxDim] = cell_spatialDID_;
+        if (nc_def_var(ncid_, "cell_lengths", NC_DOUBLE, NDIM-1,
+                       dimensionID, &cell_lengthsVID_) != NC_NOERR)
+            throw AmberCrdError("Error defining cell_lengths variable");
+        if (nc_put_att_text(ncid_, cell_lengthsVID_,
+                            "units", 8, "angstroms") != NC_NOERR)
+            throw AmberCrdError("Error defining cell_lengths units");
+        dimensionID[boxDim] = cell_angularDID_;
+        if (nc_def_var(ncid_, "cell_angles", NC_DOUBLE, NDIM-1,
+                       dimensionID, &cell_anglesVID_) != NC_NOERR)
+            throw AmberCrdError("Error defining cell_angles variable");
+        if (nc_put_att_text(ncid_, cell_anglesVID_, "units", 6, "degree") != NC_NOERR)
+            throw AmberCrdError("Error defining degree variable");
+    }
+
+    if (hasRemd) {
+        if (remdDimension > 0) {
+            dimensionID[0] = remdDID_;
+            if (nc_def_var(ncid_, "remd_dimtype", NC_INT, 1, dimensionID,
+                           &remd_dimtypeVID_) != NC_NOERR)
+                throw AmberCrdError("Error creating remd_dimtype variable");
+            if (type_ == TRAJECTORY) {
+                dimensionID[0] = frameDID_;
+                dimensionID[1] = remdDID_;
+            } else if (type_ == RESTART) {
+                dimensionID[0] = remdDID_;
+            } else {
+                throw InternalError("Should not be here");
+            }
+            if (nc_def_var(ncid_, "remd_indices", NC_INT, NDIM-1,
+                           dimensionID, &remd_indicesVID_) != NC_NOERR)
+                throw AmberCrdError("Error creating remd_indices variable");
+        } else {
+            // Define temperature
+            dimensionID[0] = frameDID_;
+            if (nc_def_var(ncid_, "temp0", NC_DOUBLE, NDIM-2,
+                           dimensionID, &temp0VID_) != NC_NOERR)
+                throw AmberCrdError("Error defining temp0 variable");
+            if (nc_put_att_text(ncid_, temp0VID_, "units", 6, "kelvin") != NC_NOERR)
+                throw AmberCrdError("Error defining temp0 units");
+        }
+    }
+
+    // We are done with all definitions
+
+    if (nc_enddef(ncid_) != NC_NOERR)
+        throw AmberCrdError("Error taking NetCDF file out of define mode");
+
+    // Fill the variables we already know the values of
+
+    size_t start[3], count[3];
+
+    // spatial variable
+    start[0] = 0; count[0] = 3;
+    char str[] = {'x', 'y', 'z'};
+    dimensionID[0] = spatialDID_;
+    if (nc_put_vara_text(ncid_, spatialVID_, start, count, str) != NC_NOERR)
+        throw AmberCrdError("Error filling spatial variable");
+
+    if (hasBox) {
+        str[0] = 'a'; str[1] = 'b'; str[2] = 'c';
+        if (nc_put_vara_text(ncid_, cell_spatialVID_, start, count, str) != NC_NOERR)
+            throw AmberCrdError("Error filling cell_spatial variable");
+        char labels[] = {'a', 'l', 'p', 'h', 'a',
+                         'b', 'e', 't', 'a', ' ',
+                         'g', 'a', 'm', 'm', 'a'};
+        start[0] = 0; start[1] = 0;
+        count[0] = 3; count[1] = 5;
+        if (nc_put_vara_text(ncid_, cell_angularVID_, start, count, labels) != NC_NOERR)
+            throw AmberCrdError("Error filling cell_angular variable");
+    }
+}
+
+void AmberNetCDFFile::setCoordinates(vector<OpenMM::Vec3> const &coordinates) {
+    if (is_old_ || ncid_ == -1)
+        throw AmberCrdError("Cannot set coordinates on an old file");
+    if (coordinates.size() != natom_)
+        throw AmberCrdError("Wrong number of coordinates");
+    switch (type_) {
+        case TRAJECTORY:
+            {
+            size_t start[] = {coordinate_frame_, 0, 0};
+            size_t count[] = {1, natom_, 3};
+            float coords[natom3_];
+            for (size_t i = 0; i < natom_; i++) {
+                size_t i3 = i*3;
+                coords[i3  ] = (float) coordinates[i][0];
+                coords[i3+1] = (float) coordinates[i][1];
+                coords[i3+2] = (float) coordinates[i][2];
+            }
+            if (nc_put_vara_float(ncid_, coordinatesVID_,
+                                  start, count, coords) != NC_NOERR)
+                throw AmberCrdError("Problem writing coordinates to NetCDF file");
+            }
+            break;
+        case RESTART:
+            {
+            if (coordinate_frame_ > 0)
+                throw AmberCrdError("Restart files can only have 1 frame!");
+            size_t start[] = {0, 0};
+            size_t count[] = {natom_, 3};
+            double coords[natom3_];
+            for (size_t i = 0; i < natom_; i++) {
+                size_t i3 = i*3;
+                coords[i3  ] = coordinates[i][0];
+                coords[i3+1] = coordinates[i][1];
+                coords[i3+2] = coordinates[i][2];
+            }
+            if (nc_put_vara_double(ncid_, coordinatesVID_,
+                                   start, count, coords) != NC_NOERR)
+                throw AmberCrdError("Problem writing coordinates to NetCDF file");
+            }
+            break;
+        default:
+            throw InternalError("Should not be here");
+            break;
+    }
+    coordinate_frame_++;
+}
+
+void AmberNetCDFFile::setCoordinatesNm(vector<OpenMM::Vec3> const &coordinates) {
+    vector<OpenMM::Vec3> coords = coordinates;
+    for (size_t i = 0; i < coords.size(); i++)
+        coords[i] *= ANGSTROM_PER_NANOMETER;
+    setCoordinates(coords);
+}
+
+void AmberNetCDFFile::setVelocities(vector<OpenMM::Vec3> const &velocities) {
+    if (is_old_ || ncid_ == -1)
+        throw AmberCrdError("Cannot set velocities on an old file");
+    if (velocities.size() != natom_)
+        throw AmberCrdError("Wrong number of velocities");
+    switch (type_) {
+        case TRAJECTORY:
+            {
+            size_t start[] = {velocity_frame_, 0, 0};
+            size_t count[] = {1, natom_, 3};
+            float vels[natom3_];
+            for (size_t i = 0; i < natom_; i++) {
+                size_t i3 = i*3;
+                vels[i3  ] = (float) velocities[i][0];
+                vels[i3+1] = (float) velocities[i][1];
+                vels[i3+2] = (float) velocities[i][2];
+            }
+            if (nc_put_vara_float(ncid_, velocitiesVID_,
+                                  start, count, vels) != NC_NOERR)
+                throw AmberCrdError("Problem writing velocities to NetCDF file");
+            }
+            break;
+        case RESTART:
+            if (velocity_frame_ > 0)
+                throw AmberCrdError("Restart files can only have 1 frame!");
+            {
+            size_t start[] = {0, 0};
+            size_t count[] = {natom_, 3};
+            double vels[natom3_];
+            for (size_t i = 0; i < natom_; i++) {
+                size_t i3 = i*3;
+                vels[i3  ] = velocities[i][0];
+                vels[i3+1] = velocities[i][1];
+                vels[i3+2] = velocities[i][2];
+            }
+            if (nc_put_vara_double(ncid_, velocitiesVID_,
+                                   start, count, vels) != NC_NOERR)
+                throw AmberCrdError("Problem writing velocities to NetCDF file");
+            }
+            break;
+        default:
+            throw InternalError("Should not be here");
+            break;
+    }
+    velocity_frame_++;
+}
+
+void AmberNetCDFFile::setVelocitiesNmPerPs(vector<OpenMM::Vec3> const &velocities) {
+    vector<OpenMM::Vec3> vels = velocities;
+    for (size_t i = 0; i < vels.size(); i++)
+        vels[i] *= ANGSTROM_PER_NANOMETER;
+    setVelocities(vels);
+}
+
+void AmberNetCDFFile::setForces(vector<OpenMM::Vec3> const &forces) {
+    if (is_old_ || ncid_ == -1)
+        throw AmberCrdError("Cannot set forces on an old file");
+    if (forces.size() != natom_)
+        throw AmberCrdError("Wrong number of forces");
+    switch (type_) {
+        case TRAJECTORY:
+            {
+            size_t start[] = {force_frame_, 0, 0};
+            size_t count[] = {1, natom_, 3};
+            float frcs[natom3_];
+            for (size_t i = 0; i < natom_; i++) {
+                size_t i3 = i*3;
+                frcs[i3  ] = (float) forces[i][0];
+                frcs[i3+1] = (float) forces[i][1];
+                frcs[i3+2] = (float) forces[i][2];
+            }
+            if (nc_put_vara_float(ncid_, forcesVID_,
+                                  start, count, frcs) != NC_NOERR)
+                throw AmberCrdError("Problem writing forces to NetCDF file");
+            }
+            break;
+        case RESTART:
+            if (force_frame_ > 0)
+                throw AmberCrdError("Restart files can only have 1 frame!");
+            {
+            size_t start[] = {0, 0};
+            size_t count[] = {natom_, 3};
+            double frcs[natom3_];
+            for (size_t i = 0; i < natom_; i++) {
+                size_t i3 = i*3;
+                frcs[i3  ] = forces[i][0];
+                frcs[i3+1] = forces[i][1];
+                frcs[i3+2] = forces[i][2];
+            }
+            if (nc_put_vara_double(ncid_, forcesVID_,
+                                   start, count, frcs) != NC_NOERR)
+                throw AmberCrdError("Problem writing forces to NetCDF file");
+            }
+            break;
+        default:
+            throw InternalError("Should not be here");
+            break;
+    }
+    force_frame_++;
+}
+
+void AmberNetCDFFile::setForcesKJPerNm(vector<OpenMM::Vec3> const &forces) {
+    vector<OpenMM::Vec3> frcs = forces;
+    for (size_t i = 0; i < frcs.size(); i++)
+        frcs[i] *= CALORIE_PER_JOULE * NANOMETER_PER_ANGSTROM;
+    setForces(frcs);
 }
 
 // Private routines
@@ -449,7 +885,10 @@ AmberNetCDFFile::AmberNetCDFFile(FileType type) :
         cell_lengthsVID_(-1), cell_anglesVID_(-1), velocitiesVID_(-1),
         forcesVID_(-1), temp0VID_(-1), remd_dimtypeVID_(-1),
         remd_indicesVID_(-1), is_open_(false), is_old_(false), type_(type),
-        num_frames_(0), natom_(0), remd_dimension_(0), label_(0) {}
+        num_frames_(0), natom_(0), natom3_(0), remd_dimension_(0), label_(0),
+        coordinate_frame_(0), velocity_frame_(0), cell_length_frame_(0),
+        cell_angle_frame_(0), force_frame_(0), time_frame_(0), temp0_frame_(0),
+        remd_indices_frame_(0) {
     throw NotNetcdf("Compiled without NetCDF support. Cannot use NetCDF functionality");
 }
 #endif /* HAS_NETCDF */
