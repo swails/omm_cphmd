@@ -377,6 +377,7 @@ class AmberNetCDFFile {
         size_t coordinate_frame_, velocity_frame_, cell_length_frame_,
                cell_angle_frame_, force_frame_, time_frame_, temp0_frame_,
                remd_indices_frame_;
+        bool remd_types_set_;
         std::string program_, programVersion_, application_, title_;
 };
 

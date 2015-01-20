@@ -8,6 +8,7 @@
 #include "amber/amber_constants.h"
 #include "amber/exceptions.h"
 #include "amber/NetCDFFile.h"
+#include "amber/unitcell.h"
 #include "amber/version.h"
 
 using namespace std;
@@ -27,7 +28,7 @@ AmberNetCDFFile::AmberNetCDFFile(AmberNetCDFFile::FileType type) :
         num_frames_(0), natom_(0), natom3_(0), remd_dimension_(0), label_(0),
         coordinate_frame_(0), velocity_frame_(0), cell_length_frame_(0),
         cell_angle_frame_(0), force_frame_(0), time_frame_(0), temp0_frame_(0),
-        remd_indices_frame_(0) {}
+        remd_indices_frame_(0), remd_types_set_(false) {}
 
 AmberNetCDFFile::~AmberNetCDFFile(void) {
     if (is_open_) nc_close(ncid_);
@@ -667,7 +668,7 @@ void AmberNetCDFFile::setCoordinates(vector<OpenMM::Vec3> const &coordinates) {
                 }
                 if (nc_put_vara_float(ncid_, coordinatesVID_,
                                       start, count, coords) != NC_NOERR)
-                    throw AmberCrdError("Problem writing coordinates to NetCDF file");
+                    throw AmberCrdError("Error writing coordinates to NetCDF file");
             }
             break;
         case RESTART:
@@ -685,7 +686,7 @@ void AmberNetCDFFile::setCoordinates(vector<OpenMM::Vec3> const &coordinates) {
                 }
                 if (nc_put_vara_double(ncid_, coordinatesVID_,
                                        start, count, coords) != NC_NOERR)
-                    throw AmberCrdError("Problem writing coordinates to NetCDF file");
+                    throw AmberCrdError("Error writing coordinates to NetCDF file");
             }
             break;
         default:
@@ -721,7 +722,7 @@ void AmberNetCDFFile::setVelocities(vector<OpenMM::Vec3> const &velocities) {
                 }
                 if (nc_put_vara_float(ncid_, velocitiesVID_,
                                       start, count, vels) != NC_NOERR)
-                    throw AmberCrdError("Problem writing velocities to NetCDF file");
+                    throw AmberCrdError("Error writing velocities to NetCDF file");
             }
             break;
         case RESTART:
@@ -739,7 +740,7 @@ void AmberNetCDFFile::setVelocities(vector<OpenMM::Vec3> const &velocities) {
                 }
                 if (nc_put_vara_double(ncid_, velocitiesVID_,
                                        start, count, vels) != NC_NOERR)
-                    throw AmberCrdError("Problem writing velocities to NetCDF file");
+                    throw AmberCrdError("Error writing velocities to NetCDF file");
             }
             break;
         default:
@@ -775,7 +776,7 @@ void AmberNetCDFFile::setForces(vector<OpenMM::Vec3> const &forces) {
                 }
                 if (nc_put_vara_float(ncid_, forcesVID_,
                                       start, count, frcs) != NC_NOERR)
-                    throw AmberCrdError("Problem writing forces to NetCDF file");
+                    throw AmberCrdError("Error writing forces to NetCDF file");
             }
             break;
         case RESTART:
@@ -793,7 +794,7 @@ void AmberNetCDFFile::setForces(vector<OpenMM::Vec3> const &forces) {
                 }
                 if (nc_put_vara_double(ncid_, forcesVID_,
                                        start, count, frcs) != NC_NOERR)
-                    throw AmberCrdError("Problem writing forces to NetCDF file");
+                    throw AmberCrdError("Error writing forces to NetCDF file");
             }
             break;
         default:
@@ -808,6 +809,212 @@ void AmberNetCDFFile::setForcesKJPerNm(vector<OpenMM::Vec3> const &forces) {
     for (size_t i = 0; i < frcs.size(); i++)
         frcs[i] *= CALORIE_PER_JOULE * NANOMETER_PER_ANGSTROM;
     setForces(frcs);
+}
+
+void AmberNetCDFFile::setUnitCell(OpenMM::Vec3 a, OpenMM::Vec3 b, OpenMM::Vec3 c) {
+    UnitCell cell(a, b, c);
+    setCellLengths(cell.getLengthA(), cell.getLengthB(), cell.getLengthC());
+    setCellAngles(cell.getAlpha(), cell.getBeta(), cell.getGamma());
+}
+
+void AmberNetCDFFile::setUnitCellNm(OpenMM::Vec3 a, OpenMM::Vec3 b, OpenMM::Vec3 c) {
+    setUnitCell(a*ANGSTROM_PER_NANOMETER,
+                b*ANGSTROM_PER_NANOMETER,
+                c*ANGSTROM_PER_NANOMETER);
+}
+
+void AmberNetCDFFile::setCellLengths(double a, double b, double c) {
+    if (is_old_ || ncid_ == -1)
+        throw AmberCrdError("Cannot set cell lengths on an old file");
+    switch (type_) {
+        case TRAJECTORY:
+            {
+                size_t start[] = {cell_length_frame_, 0};
+                size_t count[] = {1, 3};
+                float lengths[] = {(float)a, (float)b, (float)c};
+                if (nc_put_vara_float(ncid_, cell_lengthsVID_,
+                                      start, count, lengths) != NC_NOERR)
+                    throw AmberCrdError("Error writing cell lengths to NetCDF file");
+            }
+            break;
+        case RESTART:
+            if (cell_length_frame_ > 0)
+                throw AmberCrdError("Restart files can only have 1 frame!");
+            {
+                size_t start[] = {0};
+                size_t count[] = {3};
+                double lengths[] = {a, b, c};
+                if (nc_put_vara_double(ncid_, cell_lengthsVID_,
+                                       start, count, lengths) != NC_NOERR)
+                    throw AmberCrdError("Error writing cell lengths to NetCDF file");
+            }
+            break;
+        default:
+            throw InternalError("Should not be here");
+            break;
+    }
+    cell_length_frame_++;
+}
+
+void AmberNetCDFFile::setCellLengthsNm(double a, double b, double c) {
+    setCellLengths(a*ANGSTROM_PER_NANOMETER,
+                   b*ANGSTROM_PER_NANOMETER,
+                   c*ANGSTROM_PER_NANOMETER);
+}
+
+void AmberNetCDFFile::setCellAngles(double alpha, double beta, double gama) {
+    if (is_old_ || ncid_ == -1)
+        throw AmberCrdError("Cannot set cell angles on an old file");
+    switch (type_) {
+        case TRAJECTORY:
+            {
+                size_t start[] = {cell_angle_frame_, 0};
+                size_t count[] = {1, 3};
+                float angles[] = {(float)alpha, (float)beta, (float)gama};
+                if (nc_put_vara_float(ncid_, cell_anglesVID_,
+                                      start, count, angles) != NC_NOERR)
+                    throw AmberCrdError("Error writing cell angles to NetCDF file");
+            }
+            break;
+        case RESTART:
+            if (cell_angle_frame_ > 0)
+                throw AmberCrdError("Restart files can only have 1 frame!");
+            {
+                size_t start[] = {0};
+                size_t count[] = {3};
+                double angles[] = {alpha, beta, gama};
+                if (nc_put_vara_double(ncid_, cell_anglesVID_,
+                                       start, count, angles) != NC_NOERR)
+                    throw AmberCrdError("Error writing cell angles to NetCDF file");
+            }
+            break;
+        default:
+            throw InternalError("Should not be here");
+            break;
+    }
+    cell_angle_frame_++;
+}
+
+void AmberNetCDFFile::setCellAnglesRad(double alpha, double beta, double gama) {
+    setCellAngles(alpha*DEGREE_PER_RADIAN,
+                  beta*DEGREE_PER_RADIAN,
+                  gama*DEGREE_PER_RADIAN);
+}
+
+void AmberNetCDFFile::setTime(double time) {
+    if (is_old_ || ncid_ == -1)
+        throw AmberCrdError("Cannot set time on an old file");
+    switch (type_) {
+        case TRAJECTORY:
+            {
+                size_t start[] = {time_frame_};
+                size_t count[] = {1};
+                float t = (float) time;
+                if (nc_put_vara_float(ncid_, timeVID_, start, count, &t) != NC_NOERR)
+                    throw AmberCrdError("Error writing time to NetCDF file");
+            }
+            break;
+        case RESTART:
+            if (time_frame_ > 0)
+                throw AmberCrdError("Restart files can only have 1 frame!");
+            {
+                if (nc_put_var_double(ncid_, timeVID_, &time) != NC_NOERR)
+                    throw AmberCrdError("Error writing time to NetCDF file");
+            }
+            break;
+        default:
+            throw InternalError("Should not be here");
+            break;
+    }
+    time_frame_++;
+}
+
+void AmberNetCDFFile::setTemp(double temp) {
+    if (is_old_ || ncid_ == -1)
+        throw AmberCrdError("Cannot set temperature on an old file");
+    switch (type_) {
+        case TRAJECTORY:
+            {
+                size_t start[] = {temp0_frame_};
+                size_t count[] = {1};
+                if (nc_put_vara_double(ncid_, temp0VID_, start, count, &temp) != NC_NOERR)
+                    throw AmberCrdError("Error writing temperature to NetCDF file");
+            }
+            break;
+        case RESTART:
+            if (temp0_frame_ > 0)
+                throw AmberCrdError("Restart files can only have 1 frame!");
+            {
+                if (nc_put_var_double(ncid_, temp0VID_, &temp) != NC_NOERR)
+                    throw AmberCrdError("Error writing temperature to NetCDF file");
+            }
+            break;
+        default:
+            throw InternalError("Should not be here");
+            break;
+    }
+    temp0_frame_++;
+}
+
+void AmberNetCDFFile::setRemdTypes(vector<int> remdTypes) {
+    if (is_old_ || ncid_ == -1)
+        throw AmberCrdError("Cannot set REMD types on an old file");
+    if (remdTypes.size() != remd_dimension_)
+        throw AmberCrdError("REMD types is not the correct size");
+    if (remd_types_set_)
+        throw AmberCrdError("REMD dimtypes should only be set once");
+
+    size_t start[] = {0};
+    size_t count[] = {remd_dimension_};
+
+    int array[remd_dimension_];
+
+    for (int i = 0; i < remd_dimension_; i++)
+        array[i] = remdTypes[i];
+
+    if (nc_put_vara_int(ncid_, remd_dimtypeVID_, start, count, array) != NC_NOERR)
+        throw AmberCrdError("Error writing REMD dimtypes to NetCDF file.");
+
+    remd_types_set_ = true;
+}
+
+void AmberNetCDFFile::setRemdIndices(vector<int> remdIndices) {
+    if (is_old_ || ncid_ == -1)
+        throw AmberCrdError("Cannot set remd indices on an old file");
+    if (remdIndices.size() != remd_dimension_)
+        throw AmberCrdError("remdIndices is the wrong size");
+    switch (type_) {
+        case TRAJECTORY:
+            {
+                size_t start[] = {remd_indices_frame_, 0};
+                size_t count[] = {1, remd_dimension_};
+                int indices[remd_dimension_];
+                for (int i = 0; i < remd_dimension_; i++)
+                    indices[i] = remdIndices[i];
+                if (nc_put_vara_int(ncid_, remd_indicesVID_,
+                                    start, count, indices) != NC_NOERR)
+                    throw AmberCrdError("Error writing REMD indices to NetCDF file");
+            }
+            break;
+        case RESTART:
+            if (cell_angle_frame_ > 0)
+                throw AmberCrdError("Restart files can only have 1 frame!");
+            {
+                size_t start[] = {0};
+                size_t count[] = {remd_dimension_};
+                int indices[remd_dimension_];
+                for (int i = 0; i < remd_dimension_; i++)
+                    indices[i] = remdIndices[i];
+                if (nc_put_vara_int(ncid_, remd_indicesVID_,
+                                    start, count, indices) != NC_NOERR)
+                    throw AmberCrdError("Error writing REMD indices to NetCDF file");
+            }
+            break;
+        default:
+            throw InternalError("Should not be here");
+            break;
+    }
+    remd_indices_frame_++;
 }
 
 // Private routines
@@ -888,7 +1095,7 @@ AmberNetCDFFile::AmberNetCDFFile(FileType type) :
         num_frames_(0), natom_(0), natom3_(0), remd_dimension_(0), label_(0),
         coordinate_frame_(0), velocity_frame_(0), cell_length_frame_(0),
         cell_angle_frame_(0), force_frame_(0), time_frame_(0), temp0_frame_(0),
-        remd_indices_frame_(0) {
+        remd_indices_frame_(0), remd_types_set_(false) {
     throw NotNetcdf("Compiled without NetCDF support. Cannot use NetCDF functionality");
 }
 #endif /* HAS_NETCDF */
