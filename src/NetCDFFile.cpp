@@ -831,9 +831,9 @@ void AmberNetCDFFile::setCellLengths(double a, double b, double c) {
             {
                 size_t start[] = {cell_length_frame_, 0};
                 size_t count[] = {1, 3};
-                float lengths[] = {(float)a, (float)b, (float)c};
-                if (nc_put_vara_float(ncid_, cell_lengthsVID_,
-                                      start, count, lengths) != NC_NOERR)
+                double lengths[] = {a, b, c};
+                if (nc_put_vara_double(ncid_, cell_lengthsVID_,
+                                       start, count, lengths) != NC_NOERR)
                     throw AmberCrdError("Error writing cell lengths to NetCDF file");
             }
             break;
@@ -870,9 +870,9 @@ void AmberNetCDFFile::setCellAngles(double alpha, double beta, double gama) {
             {
                 size_t start[] = {cell_angle_frame_, 0};
                 size_t count[] = {1, 3};
-                float angles[] = {(float)alpha, (float)beta, (float)gama};
-                if (nc_put_vara_float(ncid_, cell_anglesVID_,
-                                      start, count, angles) != NC_NOERR)
+                double angles[] = {alpha, beta, gama};
+                if (nc_put_vara_double(ncid_, cell_anglesVID_,
+                                       start, count, angles) != NC_NOERR)
                     throw AmberCrdError("Error writing cell angles to NetCDF file");
             }
             break;
