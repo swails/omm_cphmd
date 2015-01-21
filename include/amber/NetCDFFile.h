@@ -231,7 +231,8 @@ class AmberNetCDFFile {
          * \param b The second unit cell vector (in Angstroms)
          * \param c The third unit cell vector (in Angstroms)
          */
-        void setUnitCell(OpenMM::Vec3 a, OpenMM::Vec3 b, OpenMM::Vec3 c);
+        void setUnitCell(OpenMM::Vec3 const &a, OpenMM::Vec3 const &b,
+                         OpenMM::Vec3 const &c);
         /**
          * \brief Writes cell lengths and angles from a set of unit cell vectors
          *
@@ -242,7 +243,8 @@ class AmberNetCDFFile {
          * This function is provided for convenience to work with programs that
          * use the kJ-nm-s unit system (e.g., OpenMM)
          */
-        void setUnitCellNm(OpenMM::Vec3 a, OpenMM::Vec3 b, OpenMM::Vec3 c);
+        void setUnitCellNm(OpenMM::Vec3 const &a, OpenMM::Vec3 const &b,
+                           OpenMM::Vec3 const &c);
         /**
          * \brief Writes a set of unit cell lengths to the current file
          *
@@ -311,6 +313,10 @@ class AmberNetCDFFile {
          *                    as the REMD-dimension variable
          */
         void setRemdIndices(std::vector<int> remdIndices);
+        /**
+         * \brief Closes the file
+         */
+        void close(void);
     private:
         // Utility functions
         /**

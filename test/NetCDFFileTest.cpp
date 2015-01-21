@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "Amber.h"
+#include "OpenMM.h"
 
 #define ASSERT_RAISES(statement, exctype) \
     try { statement; assert(false);} \
@@ -176,6 +177,26 @@ void test_nctraj_read(void) {
     ASSERT_RAISES(traj.getForces(-1), Amber::AmberCrdError)
 }
 
+void test_ncrst_write(void) {
+    Amber::AmberNetCDFFile testFile(Amber::AmberNetCDFFile::RESTART);
+
+    testFile.writeFile("files/tmp12345.nc", 10, true, true, false, true,
+                       false, 0, "test dummy file", "NetCDFFileTest");
+
+    vector<OpenMM::Vec3> positions, velocities;
+    for (int i = 0; i < 10; i++) {
+        double f = (double) i;
+        positions.push_back(OpenMM::Vec3(f, f+1, f+2));
+        velocities.push_back(OpenMM::Vec3(f*10, f*10+10, f*10+20));
+    }
+    testFile.setCoordinates(positions);
+    testFile.setVelocities(velocities);
+    testFile.setUnitCell(OpenMM::Vec3(1.0, 0.0, 0.0),
+                         OpenMM::Vec3(0.0, 1.0, 0.0),
+                         OpenMM::Vec3(0.0, 0.0, 1.0));
+    testFile.setTime(0.0);
+}
+
 int main() {
     cout << "Testing NetCDF reading of NetCDF restart file...";
     test_ncrst_read();
@@ -189,5 +210,8 @@ int main() {
     test_nctraj_read();
     cout << " OK." << endl;
 
+    cout << "Testing NetCDF restart file writing...";
+    test_ncrst_write();
+    cout << " OK." << endl;
     return 0;
 }

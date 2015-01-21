@@ -811,13 +811,15 @@ void AmberNetCDFFile::setForcesKJPerNm(vector<OpenMM::Vec3> const &forces) {
     setForces(frcs);
 }
 
-void AmberNetCDFFile::setUnitCell(OpenMM::Vec3 a, OpenMM::Vec3 b, OpenMM::Vec3 c) {
+void AmberNetCDFFile::setUnitCell(OpenMM::Vec3 const &a, OpenMM::Vec3 const &b,
+                                  OpenMM::Vec3 const &c) {
     UnitCell cell(a, b, c);
     setCellLengths(cell.getLengthA(), cell.getLengthB(), cell.getLengthC());
     setCellAngles(cell.getAlpha(), cell.getBeta(), cell.getGamma());
 }
 
-void AmberNetCDFFile::setUnitCellNm(OpenMM::Vec3 a, OpenMM::Vec3 b, OpenMM::Vec3 c) {
+void AmberNetCDFFile::setUnitCellNm(OpenMM::Vec3 const &a, OpenMM::Vec3 const &b,
+                                    OpenMM::Vec3 const &c) {
     setUnitCell(a*ANGSTROM_PER_NANOMETER,
                 b*ANGSTROM_PER_NANOMETER,
                 c*ANGSTROM_PER_NANOMETER);
@@ -1083,6 +1085,13 @@ int AmberNetCDFFile::GetVariableID_(const char* name) {
     return -1;
 }
 
+void AmberNetCDFFile::close(void) {
+    if (!is_open_)
+        throw AmberCrdError("Cannot close file that is not open");
+    if (nc_close(ncid_) != NC_NOERR)
+        throw AmberCrdError("Error closing file");
+    is_open_ = false;
+}
 #else
 AmberNetCDFFile::AmberNetCDFFile(FileType type) :
         ncid_(-1), atomDID_(-1), frameDID_(-1), spatialDID_(-1),
