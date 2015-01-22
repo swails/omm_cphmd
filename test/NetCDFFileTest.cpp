@@ -191,10 +191,95 @@ void test_ncrst_write(void) {
     }
     testFile.setCoordinates(positions);
     testFile.setVelocities(velocities);
-    testFile.setUnitCell(OpenMM::Vec3(1.0, 0.0, 0.0),
-                         OpenMM::Vec3(0.0, 1.0, 0.0),
-                         OpenMM::Vec3(0.0, 0.0, 1.0));
-    testFile.setTime(0.0);
+    testFile.setUnitCell(OpenMM::Vec3(2.0, 0.0, 0.0),
+                         OpenMM::Vec3(0.0, 2.0, 0.0),
+                         OpenMM::Vec3(0.0, 0.0, 2.0));
+    testFile.setTime(1.0);
+    testFile.close();
+
+    // Now read it to make sure that it is read in correctly with all of the
+    // same data
+    Amber::AmberNetCDFFile testRead;
+
+    testRead.readFile("files/tmp12345.nc");
+    assert(testRead.getFileType() == Amber::AmberNetCDFFile::RESTART);
+    assert(testRead.getNatom() == 10);
+    assert(testRead.hasBox());
+    assert(testRead.hasCoordinates());
+    assert(testRead.hasVelocities());
+    assert(!testRead.hasForces());
+    assert(!testRead.hasREMD());
+
+    assert(testRead.getCellLengths() == OpenMM::Vec3(2, 2, 2));
+    assert(testRead.getCellAngles() == OpenMM::Vec3(90, 90, 90));
+    assert(testRead.getTime() == 1.0);
+
+    vector<OpenMM::Vec3> *coords, *vels;
+    coords = testRead.getCoordinates();
+    vels = testRead.getVelocities();
+
+    vector<OpenMM::Vec3> &v = *vels;
+    vector<OpenMM::Vec3> &c = *coords;
+    for (int i = 0; i < 10; i++) {
+        assert(c[i] == positions[i]);
+        assert(v[i] == velocities[i]);
+    }
+    // Now check global attributes
+    assert(testRead.getTitle() == "test dummy file");
+    assert(testRead.getApplication() == "NetCDFFileTest");
+    assert(testRead.getProgram() == "libamber");
+    assert(testRead.getProgramVersion() == "0.1");
+}
+
+void test_ncrst_write2(void) {
+    Amber::AmberNetCDFFile testFile(Amber::AmberNetCDFFile::RESTART);
+
+    testFile.writeFile("files/tmp12345.nc", 10, true, false, true, false,
+                       true, 0, "test dummy REMD file", "REMDNetCDFTest");
+
+    vector<OpenMM::Vec3> positions, velocities;
+    for (int i = 0; i < 10; i++) {
+        double f = (double) i;
+        positions.push_back(OpenMM::Vec3(f, f+1, f+2));
+        velocities.push_back(OpenMM::Vec3(f*10, f*10+10, f*10+20));
+    }
+    testFile.setCoordinates(positions);
+    testFile.setForces(velocities);
+    testFile.setTime(1.0);
+    testFile.setTemp(298.15);
+    testFile.close();
+
+    // Now read it to make sure that it is read in correctly with all of the
+    // same data
+    Amber::AmberNetCDFFile testRead;
+
+    testRead.readFile("files/tmp12345.nc");
+    assert(testRead.getFileType() == Amber::AmberNetCDFFile::RESTART);
+    assert(testRead.getNatom() == 10);
+    assert(!testRead.hasBox());
+    assert(testRead.hasCoordinates());
+    assert(!testRead.hasVelocities());
+    assert(testRead.hasForces());
+    assert(testRead.hasREMD());
+
+    assert(testRead.getTime() == 1.0);
+
+    vector<OpenMM::Vec3> *coords, *vels;
+    coords = testRead.getCoordinates();
+    vels = testRead.getForces();
+
+    vector<OpenMM::Vec3> &v = *vels;
+    vector<OpenMM::Vec3> &c = *coords;
+    for (int i = 0; i < 10; i++) {
+        assert(c[i] == positions[i]);
+        assert(v[i] == velocities[i]);
+    }
+    assert(testRead.getTemp() == 298.15);
+    // Now check global attributes
+    assert(testRead.getTitle() == "test dummy REMD file");
+    assert(testRead.getApplication() == "REMDNetCDFTest");
+    assert(testRead.getProgram() == "libamber");
+    assert(testRead.getProgramVersion() == "0.1");
 }
 
 int main() {
@@ -206,12 +291,17 @@ int main() {
     test_bad_ncrst_read();
     cout << " OK." << endl;
 
-    cout << "Testing NetCDF reading of trajectory with coordinates, forces, and velocities...";
+    cout << "Testing NetCDF traj reading with coords, vels, and forces...";
     test_nctraj_read();
     cout << " OK." << endl;
 
     cout << "Testing NetCDF restart file writing...";
     test_ncrst_write();
     cout << " OK." << endl;
+
+    cout << "Testing NetCDF restart file writing with REMD...";
+    test_ncrst_write2();
+    cout << " OK." << endl;
+
     return 0;
 }

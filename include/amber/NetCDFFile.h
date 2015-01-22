@@ -120,6 +120,36 @@ class AmberNetCDFFile {
          */
         OpenMM::Vec3 getCellAngles(int frame=0) const;
         /**
+         * \brief Gets the time for the given frame in the NetCDF file
+         *
+         * \param frame The frame of the NetCDF file to extract the time for
+         *
+         * \return The time
+         */
+        double getTime(int frame=0) const;
+        /**
+         * \brief Gets the temperature for the given frame in the NetCDF file
+         *
+         * \param frame The frame of the NetCDF file to extract the temperature
+         *              for
+         *
+         * \return The temperature of the T-REMD frame
+         *
+         * This function only applies if the NetCDF file has temperature
+         * information (i.e., from T-REMD in Amber)
+         */
+        double getTemp(int frame=0) const;
+        /**
+         * \brief Gets the REMD indices for the given frame in the NetCDF file
+         *
+         * \param frame The frame of the NetCDF file to extract the indices for
+         *
+         * \return A vector of indices for each dimension
+         *
+         * The returned vector will have length of the REMD dimension
+         */
+        std::vector<int> getRemdIndices(int frame=0) const;
+        /**
          * Returns the program that created the NetCDF file
          *
          * \return string containing the text in the "program" attribute
@@ -158,14 +188,16 @@ class AmberNetCDFFile {
          * \param hasRemd If true, REMD information needs to be written
          * \param remdDimension If hasRemd, this is the number of REMD
          *      dimensions that will be present. Dimension of 0 means multi-D
-         *      REMD info will not be written (Do not set this for 1-D T-REMD or
-         *      1-D pH-REMD, as that will use the standard temp0 machinery)
+         *      REMD info will not be written. If hasRemd is true, and
+         *      remdDimension is set to 0, the temp0 data field will be written,
+         *      which is used for standard, 1-dimensional T-REMD and pH-REMD
+         *      simulations.
          * \param title The title of the file written to the global attributes
          * \param application The name of the program calling these functions
          *      (will be written as an attribute to the NetCDF file)
          */
         void writeFile(std::string const &filename, int natom, bool hasCrd,
-                bool hasVel, bool hasFrc, bool hasRemd, bool hasBox,
+                bool hasVel, bool hasFrc, bool hasBox, bool hasRemd,
                 int remdDimension, std::string const& title,
                 std::string const& application);
         /**
@@ -317,6 +349,12 @@ class AmberNetCDFFile {
          * \brief Closes the file
          */
         void close(void);
+        /**
+         * \brief Returns the type of file this is
+         *
+         * \return The currently set FileType
+         */
+        FileType getFileType(void) const {return type_;}
     private:
         // Utility functions
         /**

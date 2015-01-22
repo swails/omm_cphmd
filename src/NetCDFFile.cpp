@@ -143,7 +143,7 @@ vector<OpenMM::Vec3> *AmberNetCDFFile::getCoordinates(int frame) const {
             throw AmberCrdError(iss.str().c_str());
         }
         size_t start[] = {0, 0};
-        size_t count[] = {(size_t)natom_, 3};
+        size_t count[] = {natom_, 3};
         double *coords = new double[natom3_];
         if (nc_get_vara_double(ncid_, coordinatesVID_, start, count, coords) != NC_NOERR) {
             delete[] coords;
@@ -171,7 +171,7 @@ vector<OpenMM::Vec3> *AmberNetCDFFile::getCoordinates(int frame) const {
             throw AmberCrdError(iss.str().c_str());
         }
         size_t start[] = {frame, 0, 0};
-        size_t count[] = {1, (size_t)natom_, 3};
+        size_t count[] = {1, natom_, 3};
         float *coords = new float[natom3_];
         if (nc_get_vara_float(ncid_, coordinatesVID_, start, count, coords) != NC_NOERR) {
             delete[] coords;
@@ -204,7 +204,7 @@ vector<OpenMM::Vec3> *AmberNetCDFFile::getVelocities(int frame) const {
             throw AmberCrdError(iss.str().c_str());
         }
         size_t start[] = {0, 0};
-        size_t count[] = {(size_t)natom_, 3};
+        size_t count[] = {natom_, 3};
         double *vels = new double[natom3_];
         if (nc_get_vara_double(ncid_, velocitiesVID_, start, count, vels) != NC_NOERR) {
             delete[] vels;
@@ -234,7 +234,7 @@ vector<OpenMM::Vec3> *AmberNetCDFFile::getVelocities(int frame) const {
             throw AmberCrdError(iss.str().c_str());
         }
         size_t start[] = {frame, 0, 0};
-        size_t count[] = {1, (size_t)natom_, 3};
+        size_t count[] = {1, natom_, 3};
         float *vels = new float[natom3_];
         if (nc_get_vara_float(ncid_, velocitiesVID_, start, count, vels) != NC_NOERR) {
             delete[] vels;
@@ -268,7 +268,7 @@ vector<OpenMM::Vec3> *AmberNetCDFFile::getForces(int frame) const {
             throw AmberCrdError(iss.str().c_str());
         }
         size_t start[] = {0, 0};
-        size_t count[] = {(size_t)natom_, 3};
+        size_t count[] = {natom_, 3};
         double *frcs = new double[natom3_];
         if (nc_get_vara_double(ncid_, forcesVID_, start, count, frcs) != NC_NOERR) {
             delete[] frcs;
@@ -298,7 +298,7 @@ vector<OpenMM::Vec3> *AmberNetCDFFile::getForces(int frame) const {
             throw AmberCrdError(iss.str().c_str());
         }
         size_t start[] = {frame, 0, 0};
-        size_t count[] = {1, (size_t)natom_, 3};
+        size_t count[] = {1, natom_, 3};
         float *frcs = new float[natom3_];
         if (nc_get_vara_float(ncid_, forcesVID_, start, count, frcs) != NC_NOERR) {
             delete[] frcs;
@@ -384,6 +384,122 @@ OpenMM::Vec3 AmberNetCDFFile::getCellAngles(int frame) const {
     }
 }
 
+double AmberNetCDFFile::getTime(int frame) const {
+    // Basic error checking
+    if (!is_old_ || ncid_ == -1)
+        throw AmberCrdError("Cannot get time from a new NetCDF file");
+    if (timeVID_ == -1)
+        throw AmberCrdError("No time present in this NetCDF file");
+    if (type_ == RESTART) {
+        if (frame != 0)
+            throw AmberCrdError("Restart files only have a single frame");
+        double time;
+        if (nc_get_var_double(ncid_, timeVID_, &time) != NC_NOERR)
+            throw AmberCrdError("Could not get time from NetCDF file");
+        return time;
+    } else if (type_ == TRAJECTORY) {
+        if (frame >= num_frames_ || frame < 0) {
+            stringstream iss;
+            iss << "Frame " << frame << " out of range; only " << num_frames_
+                << "are present.";
+            throw AmberCrdError(iss.str().c_str());
+        }
+        size_t start[] = {frame, 0};
+        size_t count[] = {1, 1};
+        float time;
+        if (nc_get_vara_float(ncid_, cell_anglesVID_, start, count, &time) != NC_NOERR)
+            throw AmberCrdError("Could not get time form NetCDF file");
+        return (double)time;
+    } else {
+        throw AmberCrdError("Unrecognized NetCDF file type");
+    }
+}
+
+double AmberNetCDFFile::getTemp(int frame) const {
+    // Basic error checking
+    if (!is_old_ || ncid_ == -1)
+        throw AmberCrdError("Cannot get time from a new NetCDF file");
+    if (temp0VID_ == -1)
+        throw AmberCrdError("No time present in this NetCDF file");
+    if (type_ == RESTART) {
+        if (frame != 0)
+            throw AmberCrdError("Restart files only have a single frame");
+        double temp;
+        if (nc_get_var_double(ncid_, temp0VID_, &temp) != NC_NOERR)
+            throw AmberCrdError("Could not get time from NetCDF file");
+        return temp;
+    } else if (type_ == TRAJECTORY) {
+        if (frame >= num_frames_ || frame < 0) {
+            stringstream iss;
+            iss << "Frame " << frame << " out of range; only " << num_frames_
+                << "are present.";
+            throw AmberCrdError(iss.str().c_str());
+        }
+        size_t start[] = {frame, 0};
+        size_t count[] = {1, 1};
+        double temp;
+        if (nc_get_vara_double(ncid_, temp0VID_, start, count, &temp) != NC_NOERR)
+            throw AmberCrdError("Could not get time form NetCDF file");
+        return temp;
+    } else {
+        throw AmberCrdError("Unrecognized NetCDF file type");
+    }
+}
+
+vector<int> AmberNetCDFFile::getRemdIndices(int frame) const {
+    // Basic error checking
+    if (!is_old_ || ncid_ == -1)
+        throw AmberCrdError("Cannot get REMD indices from a new NetCDF file");
+    if (remd_indicesVID_ == -1)
+        throw AmberCrdError("NetCDF file does not contain REMD indices");
+    // Handle restart and trajectory files differently
+    if (type_ == RESTART) {
+        if (frame != 0) {
+            stringstream iss;
+            iss << "Frame " << frame << " out of range for NetCDF restart";
+            throw AmberCrdError(iss.str().c_str());
+        }
+        size_t start[] = {0};
+        size_t count[] = {remd_dimension_};
+        int *ind = new int[remd_dimension_];
+        if (nc_get_vara_int(ncid_, remd_indicesVID_, start, count, ind) != NC_NOERR) {
+            delete[] ind;
+            throw AmberCrdError("Could not get REMD indices from NetCDF restart file");
+        }
+        vector<int> ret;
+        ret.reserve(remd_dimension_);
+        for (int i = 0; i < natom3_; i+=3) {
+            ret.push_back(ind[i]);
+        }
+        delete[] ind;
+        return ret;
+    } else if (type_ == TRAJECTORY) {
+        if (frame >= num_frames_) {
+            stringstream iss;
+            iss << "Frame " << frame << " is out of range of the total number"
+                << "of frames (" << num_frames_ << ")";
+            throw AmberCrdError(iss.str().c_str());
+        }
+        size_t start[] = {frame, 0};
+        size_t count[] = {1, remd_dimension_};
+        int *ind = new int[remd_dimension_];
+        if (nc_get_vara_int(ncid_, remd_indicesVID_, start, count, ind) != NC_NOERR) {
+            delete[] ind;
+            throw AmberCrdError("Could not get REMD indices from NetCDF file");
+        }
+        vector<int> ret;
+        ret.reserve(remd_dimension_);
+        for (int i = 0; i < natom3_; i+=3) {
+            ret.push_back(ind[i]);
+        }
+        delete[] ind;
+        return ret;
+    } else {
+        throw AmberCrdError("Unrecognized NetCDF file type");
+    }
+    throw AmberCrdError("Should not be here");
+}
+
 void AmberNetCDFFile::writeFile(const char* filename, int natom, bool hasCrd,
                 bool hasVel, bool hasFrc, bool hasBox, bool hasRemd,
                 int remdDimension, const char* title, const char* application) {
@@ -392,7 +508,7 @@ void AmberNetCDFFile::writeFile(const char* filename, int natom, bool hasCrd,
 }
 
 void AmberNetCDFFile::writeFile(string const& filename, int natom, bool hasCrd,
-                bool hasVel, bool hasFrc, bool hasRemd, bool hasBox,
+                bool hasVel, bool hasFrc, bool hasBox, bool hasRemd,
                 int remdDimension, string const& title, string const& application) {
 
     // Check and clean the string input
@@ -437,7 +553,7 @@ void AmberNetCDFFile::writeFile(string const& filename, int natom, bool hasCrd,
         throw AmberCrdError("Cannot write to an AUTOMATIC file type");
 
     // Do not write to a file that is already open for reading
-    if (ncid_ == -1)
+    if (ncid_ != -1)
         throw AmberCrdError("AmberNetCDFFile instance already initialized");
 
     // Create and open the file
@@ -828,6 +944,9 @@ void AmberNetCDFFile::setUnitCellNm(OpenMM::Vec3 const &a, OpenMM::Vec3 const &b
 void AmberNetCDFFile::setCellLengths(double a, double b, double c) {
     if (is_old_ || ncid_ == -1)
         throw AmberCrdError("Cannot set cell lengths on an old file");
+    if (cell_lengthsVID_ == -1)
+        throw AmberCrdError("NetCDF file defined without box; "
+                            "cannot write cell lengths");
     switch (type_) {
         case TRAJECTORY:
             {
@@ -867,6 +986,9 @@ void AmberNetCDFFile::setCellLengthsNm(double a, double b, double c) {
 void AmberNetCDFFile::setCellAngles(double alpha, double beta, double gama) {
     if (is_old_ || ncid_ == -1)
         throw AmberCrdError("Cannot set cell angles on an old file");
+    if (cell_anglesVID_ == -1)
+        throw AmberCrdError("NetCDF file defined without box; "
+                            "cannot write cell angles");
     switch (type_) {
         case TRAJECTORY:
             {
@@ -1019,6 +1141,14 @@ void AmberNetCDFFile::setRemdIndices(vector<int> remdIndices) {
     remd_indices_frame_++;
 }
 
+void AmberNetCDFFile::close(void) {
+    if (!is_open_)
+        throw AmberCrdError("Cannot close file that is not open");
+    if (nc_close(ncid_) != NC_NOERR)
+        throw AmberCrdError("Error closing file");
+    is_open_ = false;
+}
+
 // Private routines
 string
 AmberNetCDFFile::GetAttributeText_(int varID, const char* attr, bool required) const {
@@ -1083,14 +1213,6 @@ int AmberNetCDFFile::GetVariableID_(const char* name) {
         return varID;
     }
     return -1;
-}
-
-void AmberNetCDFFile::close(void) {
-    if (!is_open_)
-        throw AmberCrdError("Cannot close file that is not open");
-    if (nc_close(ncid_) != NC_NOERR)
-        throw AmberCrdError("Error closing file");
-    is_open_ = false;
 }
 #else
 AmberNetCDFFile::AmberNetCDFFile(FileType type) :
