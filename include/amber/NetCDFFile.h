@@ -150,6 +150,14 @@ class AmberNetCDFFile {
          */
         std::vector<int> getRemdIndices(int frame=0) const;
         /**
+         * \brief Returns the REMD dimension types for each dimension
+         *
+         * \return list of REMD types. 1 is T-REMD and 3 is H-REMD
+         *
+         * The returned vector will have length of the REMD dimension
+         */
+        std::vector<int> getRemdTypes(void) const;
+        /**
          * Returns the program that created the NetCDF file
          *
          * \return string containing the text in the "program" attribute

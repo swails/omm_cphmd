@@ -122,7 +122,8 @@ void AmberNetCDFFile::readFile(string const& filename) {
     velocitiesVID_ = GetVariableID_("velocities");
     forcesVID_ = GetVariableID_("forces");
     temp0VID_ = GetVariableID_("temp0");
-    remd_dimtypeVID_ = GetVariableID_("remd_dimtypeVID_");
+    remd_dimtypeVID_ = GetVariableID_("remd_dimtype");
+    remd_indicesVID_ = GetVariableID_("remd_indices");
 }
 
 void AmberNetCDFFile::readFile(const char* filename) {
@@ -407,7 +408,7 @@ double AmberNetCDFFile::getTime(int frame) const {
         size_t start[] = {frame, 0};
         size_t count[] = {1, 1};
         float time;
-        if (nc_get_vara_float(ncid_, cell_anglesVID_, start, count, &time) != NC_NOERR)
+        if (nc_get_vara_float(ncid_, timeVID_, start, count, &time) != NC_NOERR)
             throw AmberCrdError("Could not get time form NetCDF file");
         return (double)time;
     } else {
@@ -468,7 +469,7 @@ vector<int> AmberNetCDFFile::getRemdIndices(int frame) const {
         }
         vector<int> ret;
         ret.reserve(remd_dimension_);
-        for (int i = 0; i < natom3_; i+=3) {
+        for (int i = 0; i < remd_dimension_; i++) {
             ret.push_back(ind[i]);
         }
         delete[] ind;
@@ -489,7 +490,7 @@ vector<int> AmberNetCDFFile::getRemdIndices(int frame) const {
         }
         vector<int> ret;
         ret.reserve(remd_dimension_);
-        for (int i = 0; i < natom3_; i+=3) {
+        for (int i = 0; i < remd_dimension_; i++) {
             ret.push_back(ind[i]);
         }
         delete[] ind;
@@ -498,6 +499,29 @@ vector<int> AmberNetCDFFile::getRemdIndices(int frame) const {
         throw AmberCrdError("Unrecognized NetCDF file type");
     }
     throw AmberCrdError("Should not be here");
+}
+
+vector<int> AmberNetCDFFile::getRemdTypes(void) const {
+    // Basic error checking
+    if (!is_old_ || ncid_ == -1)
+        throw AmberCrdError("Cannot get REMD dimtypes from a new NetCDF file");
+    if (remd_dimtypeVID_ == -1)
+        throw AmberCrdError("NetCDF file does not contain REMD dimtypes");
+    // All file types are the same for this attribute...
+    size_t start[] = {0};
+    size_t count[] = {remd_dimension_};
+    int *ind = new int[remd_dimension_];
+    if (nc_get_vara_int(ncid_, remd_dimtypeVID_, start, count, ind) != NC_NOERR) {
+        delete[] ind;
+        throw AmberCrdError("Could not get REMD dimtype from NetCDF file");
+    }
+    vector<int> ret;
+    ret.reserve(remd_dimension_);
+    for (int i = 0; i < remd_dimension_; i++) {
+        ret.push_back(ind[i]);
+    }
+    delete[] ind;
+    return ret;
 }
 
 void AmberNetCDFFile::writeFile(const char* filename, int natom, bool hasCrd,
