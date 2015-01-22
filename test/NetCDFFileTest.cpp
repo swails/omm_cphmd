@@ -640,6 +640,25 @@ void test_nctraj_remd_write2(void) {
     }
 }
 
+void test_error_handling(void) {
+    {
+        Amber::AmberNetCDFFile testFile;
+        ASSERT_RAISES(testFile.writeFile("files/tmp12345.nc", 10, true, true,
+                                         false, true, false, 0,
+                                         "test dummy file", "NetCDFFileTest"),
+                      Amber::AmberCrdError);
+        ASSERT_RAISES(testFile.readFile("files/nofile"), Amber::NotNetcdf);
+        ASSERT_RAISES(testFile.readFile("files/trx.prmtop"), Amber::NotNetcdf);
+    }
+    {
+        Amber::AmberNetCDFFile testFile(Amber::AmberNetCDFFile::TRAJECTORY);
+        Amber::AmberNetCDFFile testFile2(Amber::AmberNetCDFFile::RESTART);
+
+        ASSERT_RAISES(testFile.readFile("files/amber.ncrst"), Amber::AmberCrdError);
+        ASSERT_RAISES(testFile2.readFile("files/crdvelfrc.nc"), Amber::AmberCrdError);
+    }
+}
+
 int main() {
     cout << "Testing NetCDF reading of NetCDF restart file...";
     test_ncrst_read();
@@ -675,6 +694,10 @@ int main() {
 
     cout << "Testing NetCDF traj with M-REMD writing...";
     test_nctraj_remd_write2();
+    cout << " OK." << endl;
+
+    cout << "Testing NetCDF file error handling...";
+    test_error_handling();
     cout << " OK." << endl;
 
     return 0;
