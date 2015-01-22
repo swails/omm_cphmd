@@ -8,7 +8,7 @@ test:: clean TopologyTest AmberParmTest OpenMMTest CoordinateFileTest \
 	$(MAKE) XmlDiff
 	./CoordinateFileTest && /bin/rm ./CoordinateFileTest test.rst7
 	./NetCDFCoordinateFileTest && /bin/rm ./NetCDFCoordinateFileTest
-	./NetCDFFileTest && /bin/rm ./NetCDFFileTest
+	./NetCDFFileTest && /bin/rm -f ./NetCDFFileTest files/tmp12345.nc
 	./UnitCellTest && /bin/rm ./UnitCellTest
 
 TopologyTest: TopologyTest.cpp
