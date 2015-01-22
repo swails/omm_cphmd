@@ -229,6 +229,10 @@ void test_ncrst_write(void) {
     assert(testRead.getApplication() == "NetCDFFileTest");
     assert(testRead.getProgram() == "libamber");
     assert(testRead.getProgramVersion() == "0.1");
+
+    // Deallocate
+    delete coords;
+    delete vels;
 }
 
 void test_ncrst_write2(void) {
@@ -280,6 +284,69 @@ void test_ncrst_write2(void) {
     assert(testRead.getApplication() == "REMDNetCDFTest");
     assert(testRead.getProgram() == "libamber");
     assert(testRead.getProgramVersion() == "0.1");
+
+    // Deallocate
+    delete coords;
+    delete vels;
+}
+
+void test_ncrst_write3(void) {
+    Amber::AmberNetCDFFile testFile(Amber::AmberNetCDFFile::RESTART);
+
+    testFile.writeFile("files/tmp12345.nc", 10, true, false, true, false,
+                       true, 2, "test dummy REMD file", "REMDNetCDFTest");
+
+    vector<OpenMM::Vec3> positions, velocities;
+    for (int i = 0; i < 10; i++) {
+        double f = (double) i;
+        positions.push_back(OpenMM::Vec3(f, f+1, f+2));
+        velocities.push_back(OpenMM::Vec3(f*10, f*10+10, f*10+20));
+    }
+    vector<int> indices;
+    indices.push_back(1); indices.push_back(2);
+    testFile.setCoordinates(positions);
+    testFile.setForces(velocities);
+    testFile.setTime(1.0);
+    testFile.setRemdIndices(indices);
+    testFile.close();
+
+    // Now read it to make sure that it is read in correctly with all of the
+    // same data
+    Amber::AmberNetCDFFile testRead;
+
+    testRead.readFile("files/tmp12345.nc");
+    assert(testRead.getFileType() == Amber::AmberNetCDFFile::RESTART);
+    assert(testRead.getNatom() == 10);
+    assert(!testRead.hasBox());
+    assert(testRead.hasCoordinates());
+    assert(!testRead.hasVelocities());
+    assert(testRead.hasForces());
+    assert(testRead.hasREMD());
+
+    assert(testRead.getTime() == 1.0);
+
+    vector<OpenMM::Vec3> *coords, *vels;
+    coords = testRead.getCoordinates();
+    vels = testRead.getForces();
+
+    vector<OpenMM::Vec3> &v = *vels;
+    vector<OpenMM::Vec3> &c = *coords;
+    for (int i = 0; i < 10; i++) {
+        assert(c[i] == positions[i]);
+        assert(v[i] == velocities[i]);
+    }
+    vector<int> rindices = testRead.getRemdIndices();
+    assert(rindices[0] == indices[0]);
+    assert(rindices[1] == indices[1]);
+    // Now check global attributes
+    assert(testRead.getTitle() == "test dummy REMD file");
+    assert(testRead.getApplication() == "REMDNetCDFTest");
+    assert(testRead.getProgram() == "libamber");
+    assert(testRead.getProgramVersion() == "0.1");
+
+    // Deallocate
+    delete coords;
+    delete vels;
 }
 
 int main() {
@@ -303,5 +370,8 @@ int main() {
     test_ncrst_write2();
     cout << " OK." << endl;
 
+    cout << "Testing NetCDF restart file writing with M-REMD...";
+    test_ncrst_write3();
+    cout << " OK." << endl;
     return 0;
 }

@@ -605,6 +605,7 @@ void AmberNetCDFFile::writeFile(string const& filename, int natom, bool hasCrd,
     if (remdDimension > 0) {
         if (nc_def_dim(ncid_, "remd_dimension", (size_t)remdDimension, &remdDID_) != NC_NOERR)
             throw AmberCrdError("Error defining REMD dimension");
+        remd_dimension_ = (size_t) remdDimension;
     }
     if (hasBox) {
         if (nc_def_dim(ncid_, "cell_spatial", 3, &cell_spatialDID_) != NC_NOERR)
