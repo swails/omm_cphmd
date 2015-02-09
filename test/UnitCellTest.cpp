@@ -11,7 +11,7 @@ using namespace Amber;
 
 void diff_vecs(OpenMM::Vec3 const &a, OpenMM::Vec3 const&b, int places=6) {
     OpenMM::Vec3 diff = a - b;
-    double delta = pow(10, (double)places);
+    double delta = pow(10, -(double)places);
     for (int i = 0; i < 3; i++)
         assert(diff[i] < delta);
 }
