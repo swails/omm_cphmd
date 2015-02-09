@@ -71,7 +71,7 @@ void UnitCell::setUnitCell(double a, double b, double c,
     b_[2] = 0;
 
     c_[0] = c * cos(be);
-    c_[1] = c * (cos(al) - cos(be)*cos(ga));
+    c_[1] = c * (cos(al) - cos(be)*cos(ga)) / sin(ga);
     c_[2] = sqrt(abs(c*c - c_[0]*c_[0] - c_[1]*c_[1]));
 
     // Now make sure if anything is CLOSE to 0, we set it to 0 exactly
