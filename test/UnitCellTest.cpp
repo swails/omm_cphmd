@@ -133,26 +133,26 @@ void check_truncoct(void) {
     diff_vecs(cell.getVectorB(),
               OpenMM::Vec3(-14.963460492639706, 42.323061379247044, 0.0));
     diff_vecs(cell.getVectorC(),
-              OpenMM::Vec3(-14.963460492639706, -19.951280254399542, 37.32543289396548));
+              OpenMM::Vec3(-14.963460492639706, -21.161528128425644, 36.65284779906417));
 
     assert(abs(cell.getLengthA() - 44.8903851) < 1e-6);
     assert(abs(cell.getLengthB() - 44.8903851) < 1e-6);
     assert(abs(cell.getLengthC() - 44.8903851) < 1e-6);
 
-    assert(abs(cell.getAlpha() - 109.471219) < 5); // Very sensitive...
+    assert(abs(cell.getAlpha() - 109.471219) < 1e-5);
     assert(abs(cell.getBeta() - 109.471219) < 1e-5);
     assert(abs(cell.getGamma() - 109.471219) < 1e-5);
 
     UnitCell cell2;
     cell2.setVectorA(OpenMM::Vec3(44.8903851, 0, 0));
     cell2.setVectorB(OpenMM::Vec3(-14.963460492639706, 42.323061379247044, 0.0));
-    cell2.setVectorC(OpenMM::Vec3(-14.963460492639706, -19.951280254399542,
-                                 37.32543289396548));
+    cell2.setVectorC(OpenMM::Vec3(-14.963460492639706, -21.161528128425644,
+                                  36.65284779906417));
 
     assert(abs(cell2.getLengthA() - 44.8903851) < 1e-6);
     assert(abs(cell2.getLengthB() - 44.8903851) < 1e-6);
     assert(abs(cell2.getLengthC() - 44.8903851) < 1e-6);
-    assert(abs(cell2.getAlpha() - 109.471219) < 5); // Very sensitive...
+    assert(abs(cell2.getAlpha() - 109.471219) < 1e-5);
     assert(abs(cell2.getBeta() - 109.471219) < 1e-5);
     assert(abs(cell2.getGamma() - 109.471219) < 1e-5);
 }
