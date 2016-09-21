@@ -22,7 +22,7 @@ OpenMMTest: OpenMMTest.cpp
 
 # Dependencies for this are wrong -- make sure it is run after OpenMMTest
 XmlDiff:
-	@if [ -z `/usr/bin/diff -w serialized_system.xml files/serialized_system.xml` ]; then \
+	@if [ -z $(/usr/bin/diff -w serialized_system.xml files/serialized_system.xml) ]; then \
 		echo "XML File comparison... OK" && /bin/rm serialized_system.xml; \
 	else \
 		echo "XML File comparison... FAILED" && false; \

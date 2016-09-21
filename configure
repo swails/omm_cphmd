@@ -45,7 +45,7 @@ elif 'CC' in os.environ:
       arg.append('intel')
    else:
       sys.stderr.write('Unrecognized C compiler %s' % os.environ['CXX'])
-elif arg < 1:
+elif len(arg) < 1:
    sys.stderr.write('No compiler provided or detected from the environment\n')
 
 if len(arg) > 1:
